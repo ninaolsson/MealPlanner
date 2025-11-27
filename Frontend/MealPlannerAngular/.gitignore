@@ -1,24 +1,54 @@
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+#   FRONTEND
+
 
 # Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
+dist/
+tmp/
+out-tsc/
+bazel-out/
 
 # Node
-/node_modules
+node_modules/
 npm-debug.log
 yarn-error.log
+package-lock.json
 
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
+# Angular cache
+.angular/cache/
+.sass-cache/
+
+# Misc
+coverage/
+libpeerconnection.log
+testem.log
+typings/
+
+
+#   .NET (Backend)
+
+
+# Build artifacts
+bin/
+obj/
+Debug/
+Release/
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+
+# Logs
+*.log
+*.tlog
+
+# Publish outputs
+appsettings.*.json
+# (keep appsettings.json, but ignore environment-specific ones)
+
+
+#   IDE / EDITOR FILES
+
 
 # Visual Studio Code
 .vscode/*
@@ -26,17 +56,33 @@ yarn-error.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
-.history/*
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
+# JetBrains / VS
+.idea/
+*.sln.iml
 
-# System files
+# Misc IDE files
+.project
+.classpath
+.settings/
+.c9/
+*.launch
+*.sublime-workspace
+
+
+#   SYSTEM FILES
+
+
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
 Thumbs.db
+
+
+#   ENVIRONMENT / SECRETS
+
+
+.env
+*.env
+.env.*
