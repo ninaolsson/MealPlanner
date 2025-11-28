@@ -1,1 +1,23 @@
-<p>mealplan-list works!</p>
+<h2>Meal Plan List</h2>
+
+<table border="1" cellpadding="8">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Day</th>
+      <th>Meal Type</th>
+      <th>Recipe</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    @for (plan of mealplans; track plan.id) {
+      <tr>
+        <td>{{ plan.id }}</td>
+        <td>{{ plan.dayOfWeek }}</td>
+        <td>{{ plan.mealType }}</td>
+        <td>{{ plan.recipeName }}</td>
+      </tr>
+    }
+  </tbody>
+</table>

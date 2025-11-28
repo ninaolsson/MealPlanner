@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-mealplan-edit',
@@ -6,6 +7,11 @@ import { Component } from '@angular/core';
   templateUrl: './mealplan-edit.html',
   styleUrl: './mealplan-edit.css',
 })
-export class MealplanEdit {
+export class MealplanEditComponent {
+  id: number | null = null;
 
+  constructor(private route: ActivatedRoute) {
+    this.id = Number(this.route.snapshot.paramMap.get('id'));
+  
+  }
 }
