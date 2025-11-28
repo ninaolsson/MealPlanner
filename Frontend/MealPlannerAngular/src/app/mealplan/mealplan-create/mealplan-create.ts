@@ -1,3 +1,5 @@
+/*FORM TO CREATE NEW MEAL PLAN ENTRY*/
+
 import { Component } from '@angular/core';
 
 @Component({
@@ -6,6 +8,6 @@ import { Component } from '@angular/core';
   templateUrl: './mealplan-create.html',
   styleUrl: './mealplan-create.css',
 })
-export class MealplanCreateComponent {
+export class MealPlanCreateComponent {
 
 }

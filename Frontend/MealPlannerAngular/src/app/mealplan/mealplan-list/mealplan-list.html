@@ -11,7 +11,14 @@
   </thead>
 
   <tbody>
-    @for (plan of mealplans; track plan.id) {
+
+    <!-- If empty -->
+    <tr *ngIf="mealPlans.length === 0">
+      <td colspan="4">No meal plans found.</td>
+    </tr>
+
+    <!-- If there are entries -->
+    @for (plan of mealPlans; track plan.id) {
       <tr>
         <td>{{ plan.id }}</td>
         <td>{{ plan.dayOfWeek }}</td>
@@ -19,5 +26,8 @@
         <td>{{ plan.recipeName }}</td>
       </tr>
     }
+
   </tbody>
 </table>
+
+

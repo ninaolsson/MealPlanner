@@ -1,5 +1,9 @@
-import { Component } from '@angular/core';
+/*VIEW ALL MEAL PLAN ENTRIES IN A TABLE*/
+
+
+import { Component, OnInit } from '@angular/core';
 import { MealPlan } from '../../model/meal-plan';
+import { MealPlanService } from '../mealplan/mealplan.service';
 
 @Component({
   selector: 'app-mealplan-list',
@@ -8,23 +12,20 @@ import { MealPlan } from '../../model/meal-plan';
   templateUrl: './mealplan-list.html',
   styleUrl: './mealplan-list.css'
 })
-export class MealplanListComponent {
-  
-  mealplans: MealPlan[] = [
-    {
-      id: 1,
-      dayOfWeek: 1,
-      mealType: 'Lunch',
-      recipeId: 101,
-      recipeName: 'Pasta Bolognese'
-    },
-    {
-      id: 2,
-      dayOfWeek: 3,
-      mealType: 'Dinner',
-      recipeId: 205,
-      recipeName: 'Chicken Curry'
-    }
-  ];
+export class MealPlanListComponent implements OnInit {
 
+  mealPlans: MealPlan[] = [];
+
+  constructor(private mealPlanService: MealPlanService) {}
+
+  ngOnInit() { 
+    this.mealPlanService.getMealPlans().subscribe({
+      next: data => {
+        this.mealPlans = data;
+      },
+      error: err => {
+        console.error('Failed to fetch meal plans', err);
+      }
+    });
+  }
 }

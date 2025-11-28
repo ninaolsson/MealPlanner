@@ -1,3 +1,5 @@
+/*EDIT EXISTING MEAL PLAN ENTRY (WITH PRE-FILLED COMPONENTS)*/
+
 import { Component } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 
@@ -7,7 +9,7 @@ import { ActivatedRoute } from '@angular/router';
   templateUrl: './mealplan-edit.html',
   styleUrl: './mealplan-edit.css',
 })
-export class MealplanEditComponent {
+export class MealPlanEditComponent {
   id: number | null = null;
 
   constructor(private route: ActivatedRoute) {
