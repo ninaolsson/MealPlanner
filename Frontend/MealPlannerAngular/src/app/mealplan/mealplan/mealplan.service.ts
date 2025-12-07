@@ -31,5 +31,9 @@ export class MealPlanService {
   deleteMealPlan(id: number): Observable<any> {
     return this.http.delete(`${this.apiUrl}/${id}`);
   }
+
+  getRecipes(): Observable<any[]> {
+    return this.http.get<any[]>('http://localhost:5009/api/recipe');
+  }
 }
 

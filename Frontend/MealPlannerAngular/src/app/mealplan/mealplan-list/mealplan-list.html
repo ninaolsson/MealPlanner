@@ -6,24 +6,27 @@
       <th>ID</th>
       <th>Day</th>
       <th>Meal Type</th>
-      <th>Recipe</th>
+      <th>Actions</th>
     </tr>
   </thead>
 
   <tbody>
 
-    <!-- If empty -->
+    <!-- Empty state -->
     <tr *ngIf="mealPlans.length === 0">
-      <td colspan="4">No meal plans found.</td>
+      <td colspan="5">No meal plans found.</td>
     </tr>
 
-    <!-- If there are entries -->
-    @for (plan of mealPlans; track plan.id) {
+    <!-- Rows -->
+    @for (plan of mealPlans; track plan.mealId) {
       <tr>
-        <td>{{ plan.id }}</td>
+        <td>{{ plan.mealId }}</td>
         <td>{{ plan.dayOfWeek }}</td>
         <td>{{ plan.mealType }}</td>
-        <td>{{ plan.recipeName }}</td>
+        <td>
+          <button (click)="deleteMealPlan(plan.mealId)">Delete</button>
+          <button [routerLink]="['/mealplans/edit', plan.mealId]">Edit</button>
+        </td>
       </tr>
     }
 

@@ -1,5 +1,33 @@
 <h2>Edit Meal Plan</h2>
 
-<p>Editing meal plan with ID: {{ id }}</p>
+<div *ngIf="mealPlan; else loading">
+  <form (ngSubmit)="onSubmit()">
 
-<p>This is a placeholder. The form will be added in the next step.</p>
+    <label>Day of Week:</label>
+    <select [(ngModel)]="mealPlan.dayOfWeek" name="dayOfWeek">
+      <option *ngFor="let day of daysOfWeek" [value]="day">{{ day }}</option>
+    </select>
+    <br /><br />
+
+    <label>Meal Type:</label>
+    <select [(ngModel)]="mealPlan.mealType" name="mealType">
+      <option *ngFor="let type of mealTypes" [value]="type">{{ type }}</option>
+    </select>
+    <br /><br />
+
+    <label>Recipe:</label>
+    <select [(ngModel)]="mealPlan.recipeId" name="recipeId">
+      <option *ngFor="let recipe of recipes" [value]="recipe.recipeId">
+        {{ recipe.name }}
+      </option>
+    </select>
+    <br /><br />
+
+    <button type="submit">Save Changes</button>
+  </form>
+</div>
+
+<ng-template #loading>
+  <p>Loading meal plan...</p>
+</ng-template>
+

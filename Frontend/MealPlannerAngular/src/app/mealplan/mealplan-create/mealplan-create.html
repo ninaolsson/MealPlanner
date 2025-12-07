@@ -1,1 +1,30 @@
-<p>mealplan-create works!</p>
+<h2>Create New Meal Plan Entry</h2>
+
+<form (ngSubmit)="onSubmit()">
+
+  <!-- Day -->
+  <label for="day">Day of Week:</label>
+  <select id="day" [(ngModel)]="mealPlan.dayOfWeek" name="dayOfWeek">
+    <option *ngFor="let day of daysOfWeek" [value]="day">{{ day }}</option>
+  </select>
+  <br><br>
+
+  <!-- Meal Type -->
+  <label for="mealType">Meal Type:</label>
+  <select id="mealType" [(ngModel)]="mealPlan.mealType" name="mealType">
+    <option *ngFor="let type of mealTypes" [value]="type">{{ type }}</option>
+  </select>
+  <br><br>
+
+  <!-- Recipe -->
+  <label for="recipe">Recipe:</label>
+  <select id="recipe" [(ngModel)]="mealPlan.recipeId" name="recipeId">
+    <option *ngFor="let r of recipes" [value]="r.recipeId">
+      {{ r.name }}
+    </option>
+  </select>
+  <br><br>
+
+  <button type="submit">Save</button>
+</form>
+

@@ -86,3 +86,10 @@ Thumbs.db
 .env
 *.env
 .env.*
+
+Backend/**/bin/
+Backend/**/obj/
+Backend/**/project.assets.json
+Backend/**/project.nuget.cache
+Backend/**/ref/
+Backend/**/.vs/

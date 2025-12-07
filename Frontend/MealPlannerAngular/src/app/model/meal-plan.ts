@@ -1,7 +1,7 @@
 export interface MealPlan {
-    id: number;
-    dayOfWeek: number;
-    mealType: string;
+    mealId: number;
     recipeId: number;
-    recipeName?: string;
-}
+    dayOfWeek: string;
+    mealType: string;
+  }
+  
