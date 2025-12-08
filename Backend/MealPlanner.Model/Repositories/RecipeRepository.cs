@@ -9,150 +9,170 @@ using NpgsqlTypes;
 
 
 public class RecipeRepository : BaseRepository
-{
-    public RecipeRepository(IConfiguration configuration) : base(configuration) { }
+    {
+        public RecipeRepository(IConfiguration configuration) : base(configuration) { }
 
-    
-    // GET ONE RECIPE
-    
-    public Recipe GetRecipeById(int id)
+        // ---------------------------------------------------------
+        // GET ONE RECIPE BY ID (WITHOUT INGREDIENTS)
+        // Ingredients are loaded in the controller via IngredientRepository
+        // ---------------------------------------------------------
+        public Recipe GetRecipeById(int id)
+        {
+            NpgsqlConnection dbConn = null;
+
+            try
+            {
+                dbConn = new NpgsqlConnection(ConnectionString);
+                var cmd = dbConn.CreateCommand();
+
+                cmd.CommandText = "SELECT * FROM recipe WHERE recipe_id = @id";
+                cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
+
+                var data = GetData(dbConn, cmd);
+
+                if (data.Read())
+                {
+                    return new Recipe
+                    {
+                        RecipeId = (int)data["recipe_id"],
+                        Name = data["name"].ToString(),
+                        CookingTime = (int)data["cooking_time"],
+                        Instructions = data["instructions"] == DBNull.Value
+                            ? null
+                            : data["instructions"].ToString(),
+
+                        // Ingredients will be added later in controller
+                        Ingredients = new List<Ingredient>()
+                    };
+                }
+
+                return null;
+            }
+            finally
+            {
+                dbConn?.Close();
+            }
+        }
+
+        // ---------------------------------------------------------
+        // GET ALL RECIPES (WITHOUT INGREDIENTS)
+        // Ingredients will be loaded outside this repository
+        // ---------------------------------------------------------
+        public List<Recipe> GetRecipes()
+        {
+            var recipes = new List<Recipe>();
+            NpgsqlConnection dbConn = null;
+
+            try
+            {
+                dbConn = new NpgsqlConnection(ConnectionString);
+                var cmd = dbConn.CreateCommand();
+                cmd.CommandText = "SELECT * FROM recipe ORDER BY recipe_id";
+
+                var data = GetData(dbConn, cmd);
+
+                while (data.Read())
+                {
+                    recipes.Add(new Recipe
+                    {
+                        RecipeId = (int)data["recipe_id"],
+                        Name = data["name"].ToString(),
+                        CookingTime = (int)data["cooking_time"],
+                        Instructions = data["instructions"] == DBNull.Value
+                            ? null
+                            : data["instructions"].ToString(),
+                        Ingredients = new List<Ingredient>() // init empty list
+                    });
+                }
+
+                return recipes;
+            }
+            finally
+            {
+                dbConn?.Close();
+            }
+        }
+
+        // ---------------------------------------------------------
+        // INSERT RECIPE
+        // Modified: Returns TRUE and sets RecipeId on the object
+        // ---------------------------------------------------------
+        public bool InsertRecipe(Recipe r)
 {
-    NpgsqlConnection dbConn = null;
+    var dbConn = new NpgsqlConnection(ConnectionString);
+    dbConn.Open();
+    var transaction = dbConn.BeginTransaction();
 
     try
     {
-        dbConn = new NpgsqlConnection(ConnectionString);
-        dbConn.Open();
-
+        // Insert recipe
         var cmd = dbConn.CreateCommand();
-
-        cmd.CommandText = @"
-            SELECT r.recipe_id,
-                   r.name,
-                   r.cooking_time,
-                   r.instructions,
-                   i.ingredient_id,
-                   i.name AS ingredient_name,
-                   i.quantity
-            FROM recipe r
-            LEFT JOIN ingredient i ON r.recipe_id = i.recipe_id
-            WHERE r.recipe_id = @id
-        ";
-
-        cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
-
-        var data = cmd.ExecuteReader();
-
-        Recipe recipe = null;
-
-        while (data.Read())
-        {
-            // Initialize recipe only once
-            if (recipe == null)
-            {
-                recipe = new Recipe
-                {
-                    RecipeId = (int)data["recipe_id"],
-                    Name = data["name"].ToString(),
-                    CookingTime = (int)data["cooking_time"],
-                    Instructions = data["instructions"] == DBNull.Value
-                        ? null
-                        : data["instructions"].ToString(),
-                    Ingredients = new List<Ingredient>()
-                };
-            }
-
-            // Add ingredient rows
-            if (data["ingredient_id"] != DBNull.Value)
-            {
-                recipe.Ingredients.Add(new Ingredient
-                {
-                    IngredientId = (int)data["ingredient_id"],
-                    RecipeId = id,
-                    Name = data["ingredient_name"].ToString(),
-                    Quantity = data["quantity"].ToString()
-                });
-            }
-        }
-
-        return recipe;
-    }
-    finally
-    {
-        dbConn?.Close();
-    }
-}
-
-
-    
-    // GET ALL RECIPES FROM THE DATABASE
-    
-    public List<Recipe> GetRecipes()
-    {
-        var recipes = new List<Recipe>();
-        NpgsqlConnection dbConn = null;
-
-        try
-        {
-            dbConn = new NpgsqlConnection(ConnectionString);
-            var cmd = dbConn.CreateCommand();
-
-            cmd.CommandText = "select * from recipe order by recipe_id";
-
-            var data = GetData(dbConn, cmd);
-
-            while (data.Read())
-            {
-                recipes.Add(new Recipe
-                {
-                    RecipeId = (int)data["recipe_id"],
-                    Name = data["name"].ToString(),
-                    CookingTime = (int)data["cooking_time"],
-                    Instructions = data["instructions"] == DBNull.Value
-                        ? null
-                        : data["instructions"].ToString()
-                });
-            }
-
-            return recipes;
-        }
-        finally
-        {
-            dbConn?.Close();
-        }
-    }
-
-    
-    // ADD A NEW RECIPE TO THE DATABASE
-    
-    public bool InsertRecipe(Recipe r)
-    {
-        var dbConn = new NpgsqlConnection(ConnectionString);
-        var cmd = dbConn.CreateCommand();
+        cmd.Transaction = transaction;
 
         cmd.CommandText = @"
             insert into recipe (name, cooking_time, instructions)
             values (@name, @cooking_time, @instructions)
+            returning recipe_id
         ";
 
         cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name);
         cmd.Parameters.AddWithValue("@cooking_time", NpgsqlDbType.Integer, r.CookingTime);
+        cmd.Parameters.AddWithValue("@instructions",
+            r.Instructions == null ? DBNull.Value : r.Instructions);
 
-        if (r.Instructions == null)
-            cmd.Parameters.AddWithValue("@instructions", DBNull.Value);
-        else
-            cmd.Parameters.AddWithValue("@instructions", NpgsqlDbType.Text, r.Instructions);
+        var newId = (int)cmd.ExecuteScalar();
+        r.RecipeId = newId;
 
-        return InsertData(dbConn, cmd);
+        // Insert ingredients
+        if (r.Ingredients != null)
+        {
+            foreach (var ing in r.Ingredients)
+            {
+                var cmdIng = dbConn.CreateCommand();
+                cmdIng.Transaction = transaction;
+
+                cmdIng.CommandText = @"
+                    insert into ingredient (recipe_id, name, quantity)
+                    values (@recipe_id, @name, @quantity)
+                ";
+
+                cmdIng.Parameters.AddWithValue("@recipe_id", NpgsqlDbType.Integer, newId);
+                cmdIng.Parameters.AddWithValue("@name", NpgsqlDbType.Text, ing.Name);
+                cmdIng.Parameters.AddWithValue("@quantity",
+                    ing.Quantity == null ? DBNull.Value : ing.Quantity);
+
+                cmdIng.ExecuteNonQuery();
+            }
+        }
+
+        transaction.Commit();
+        return true;
     }
-
-    
-    // UPDATE AN EXISTING RECIPE'S DETAIL
-    
-    public bool UpdateRecipe(Recipe r)
+    catch
     {
-        var dbConn = new NpgsqlConnection(ConnectionString);
+        transaction.Rollback();
+        return false;
+    }
+    finally
+    {
+        dbConn.Close();
+    }
+}
+
+        // ---------------------------------------------------------
+        // UPDATE RECIPE
+        // ---------------------------------------------------------
+        public bool UpdateRecipe(Recipe r)
+{
+    var dbConn = new NpgsqlConnection(ConnectionString);
+    dbConn.Open();
+    var transaction = dbConn.BeginTransaction();
+
+    try
+    {
+        // Update recipe
         var cmd = dbConn.CreateCommand();
+        cmd.Transaction = transaction;
 
         cmd.CommandText = @"
             update recipe set
@@ -164,28 +184,66 @@ public class RecipeRepository : BaseRepository
 
         cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name);
         cmd.Parameters.AddWithValue("@cooking_time", NpgsqlDbType.Integer, r.CookingTime);
-
-        if (r.Instructions == null)
-            cmd.Parameters.AddWithValue("@instructions", DBNull.Value);
-        else
-            cmd.Parameters.AddWithValue("@instructions", NpgsqlDbType.Text, r.Instructions);
-
+        cmd.Parameters.AddWithValue("@instructions",
+            r.Instructions == null ? DBNull.Value : r.Instructions);
         cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, r.RecipeId);
 
-        return UpdateData(dbConn, cmd);
+        cmd.ExecuteNonQuery();
+
+        // Delete old ingredients
+        var cmdDelete = dbConn.CreateCommand();
+        cmdDelete.Transaction = transaction;
+        cmdDelete.CommandText = "delete from ingredient where recipe_id = @id";
+        cmdDelete.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, r.RecipeId);
+        cmdDelete.ExecuteNonQuery();
+
+        // Insert new ingredients
+        if (r.Ingredients != null)
+        {
+            foreach (var ing in r.Ingredients)
+            {
+                var cmdIng = dbConn.CreateCommand();
+                cmdIng.Transaction = transaction;
+
+                cmdIng.CommandText = @"
+                    insert into ingredient (recipe_id, name, quantity)
+                    values (@recipe_id, @name, @quantity)
+                ";
+
+                cmdIng.Parameters.AddWithValue("@recipe_id", NpgsqlDbType.Integer, r.RecipeId);
+                cmdIng.Parameters.AddWithValue("@name", NpgsqlDbType.Text, ing.Name);
+                cmdIng.Parameters.AddWithValue("@quantity",
+                    ing.Quantity == null ? DBNull.Value : ing.Quantity);
+
+                cmdIng.ExecuteNonQuery();
+            }
+        }
+
+        transaction.Commit();
+        return true;
     }
-
-    
-    // DELETE A RECIPE
-    
-    public bool DeleteRecipe(int id)
+    catch
     {
-        var dbConn = new NpgsqlConnection(ConnectionString);
-        var cmd = dbConn.CreateCommand();
-
-        cmd.CommandText = "delete from recipe where recipe_id = @id";
-        cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
-
-        return DeleteData(dbConn, cmd);
+        transaction.Rollback();
+        return false;
+    }
+    finally
+    {
+        dbConn.Close();
     }
 }
+
+        // ---------------------------------------------------------
+        // DELETE RECIPE
+        // ---------------------------------------------------------
+        public bool DeleteRecipe(int id)
+        {
+            var dbConn = new NpgsqlConnection(ConnectionString);
+            var cmd = dbConn.CreateCommand();
+
+            cmd.CommandText = "DELETE FROM recipe WHERE recipe_id = @id";
+            cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
+
+            return DeleteData(dbConn, cmd);
+        }
+    }

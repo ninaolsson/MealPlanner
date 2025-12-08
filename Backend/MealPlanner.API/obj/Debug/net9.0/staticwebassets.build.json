@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "9VFy0tA/zsxAxiW/gkltMGSbYbU67pBg9S6Uj6CspxM=",
+  "Source": "MealPlanner.API",
+  "BasePath": "_content/MealPlanner.API",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

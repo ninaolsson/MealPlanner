@@ -9,78 +9,121 @@ namespace MealPlanner.API.Controllers
     [ApiController]
     public class RecipeController : ControllerBase
     {
-        protected RecipeRepository Repository { get; }
-        public RecipeController(RecipeRepository repository)
+        private readonly RecipeRepository _recipeRepo;
+        private readonly IngredientRepository _ingredientRepo;
+
+        public RecipeController(RecipeRepository recipeRepo, IngredientRepository ingredientRepo)
         {
-            Repository = repository;
+            _recipeRepo = recipeRepo;
+            _ingredientRepo = ingredientRepo;
         }
 
+        // ---------------------------------------------------------
+        // GET ONE RECIPE (WITH INGREDIENTS)
+        // ---------------------------------------------------------
         [HttpGet("{id}")]
-        public ActionResult<Recipe> GetRecipe([FromRoute] int id)
+        public ActionResult<Recipe> GetRecipe(int id)
         {
-            Recipe recipe = Repository.GetRecipeById(id);
+            var recipe = _recipeRepo.GetRecipeById(id);
             if (recipe == null)
-            {
-                return NotFound();
-            }
+                return NotFound($"Recipe with ID {id} not found.");
+
+            // Attach ingredients
+            recipe.Ingredients = _ingredientRepo.GetIngredientsByRecipeId(id);
+
             return Ok(recipe);
         }
 
+        // ---------------------------------------------------------
+        // GET ALL RECIPES (WITHOUT ingredients for performance)
+        // ---------------------------------------------------------
         [HttpGet]
         public ActionResult<IEnumerable<Recipe>> GetRecipes()
         {
-            return Ok(Repository.GetRecipes());
+            return Ok(_recipeRepo.GetRecipes());
         }
 
+        // ---------------------------------------------------------
+        // CREATE RECIPE + INGREDIENTS
+        // ---------------------------------------------------------
         [HttpPost]
-        public ActionResult Post([FromBody] Recipe recipe)
+        public ActionResult CreateRecipe([FromBody] Recipe recipe)
         {
             if (recipe == null)
+                return BadRequest("Recipe data missing.");
+
+            bool ok = _recipeRepo.InsertRecipe(recipe);
+            if (!ok)
+                return BadRequest("Could not insert recipe.");
+
+            // -----------------------------------------------------
+            // Insert ingredients
+            // -----------------------------------------------------
+            if (recipe.Ingredients != null && recipe.Ingredients.Count > 0)
             {
-                return BadRequest("Recipe info not correct");
+                foreach (var ing in recipe.Ingredients)
+                {
+                    ing.RecipeId = recipe.RecipeId;
+                    _ingredientRepo.InsertIngredient(ing);
+                }
             }
-            bool status = Repository.InsertRecipe(recipe);
-            if (status)
-            {
-                return Ok();
-            }
-            return BadRequest();
+
+            return Ok();
         }
 
+        // ---------------------------------------------------------
+        // UPDATE RECIPE + REPLACE INGREDIENTS
+        // ---------------------------------------------------------
         [HttpPut]
-
         public ActionResult UpdateRecipe([FromBody] Recipe recipe)
         {
             if (recipe == null)
+                return BadRequest("Recipe data missing.");
+
+            var existing = _recipeRepo.GetRecipeById(recipe.RecipeId);
+            if (existing == null)
+                return NotFound($"Recipe with ID {recipe.RecipeId} does not exist.");
+
+            bool ok = _recipeRepo.UpdateRecipe(recipe);
+            if (!ok)
+                return BadRequest("Failed to update recipe.");
+
+            // -----------------------------------------------------
+            // Replace Ingredients: delete all + reinsert new ones
+            // -----------------------------------------------------
+            _ingredientRepo.DeleteIngredientsByRecipeId(recipe.RecipeId);
+
+            if (recipe.Ingredients != null)
             {
-                return BadRequest("Recipe info not correct");
+                foreach (var ing in recipe.Ingredients)
+                {
+                    ing.RecipeId = recipe.RecipeId;
+                    _ingredientRepo.InsertIngredient(ing);
+                }
             }
-            Recipe existinRecipe = Repository.GetRecipeById(recipe.RecipeId);
-            if (existinRecipe == null)
-            {
-                return NotFound($"Recipe with id {recipe.RecipeId} not found");
-            }
-            bool status = Repository.UpdateRecipe(recipe);
-            if (status)
-            {
-                return Ok();
-            }
-            return BadRequest("Something went wrong");
+
+            return Ok();
         }
+
+        // ---------------------------------------------------------
+        // DELETE RECIPE + ALL INGREDIENTS
+        // ---------------------------------------------------------
         [HttpDelete("{id}")]
-        public ActionResult DeleteRecipe([FromRoute] int id)
+        public ActionResult DeleteRecipe(int id)
         {
-            Recipe existingRecipe = Repository.GetRecipeById(id);
-            if (existingRecipe == null)
-            {
-                return NotFound($"Recipe with id {id} not found");
-            }
-            bool status = Repository.DeleteRecipe(id);
-            if (status)
-            {
-                return NoContent();
-            }
-            return BadRequest($"Unable to delete recipe with id {id}");
+            var existing = _recipeRepo.GetRecipeById(id);
+            if (existing == null)
+                return NotFound($"Recipe with ID {id} not found.");
+
+            // Delete ingredients first
+            _ingredientRepo.DeleteIngredientsByRecipeId(id);
+
+            // Delete the recipe
+            bool ok = _recipeRepo.DeleteRecipe(id);
+            if (!ok)
+                return BadRequest("Failed to delete recipe.");
+
+            return NoContent();
         }
     }
 }
