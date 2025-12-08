@@ -16,39 +16,73 @@ public class RecipeRepository : BaseRepository
     // GET ONE RECIPE
     
     public Recipe GetRecipeById(int id)
+{
+    NpgsqlConnection dbConn = null;
+
+    try
     {
-        NpgsqlConnection dbConn = null;
+        dbConn = new NpgsqlConnection(ConnectionString);
+        dbConn.Open();
 
-        try
+        var cmd = dbConn.CreateCommand();
+
+        cmd.CommandText = @"
+            SELECT r.recipe_id,
+                   r.name,
+                   r.cooking_time,
+                   r.instructions,
+                   i.ingredient_id,
+                   i.name AS ingredient_name,
+                   i.quantity
+            FROM recipe r
+            LEFT JOIN ingredient i ON r.recipe_id = i.recipe_id
+            WHERE r.recipe_id = @id
+        ";
+
+        cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
+
+        var data = cmd.ExecuteReader();
+
+        Recipe recipe = null;
+
+        while (data.Read())
         {
-            dbConn = new NpgsqlConnection(ConnectionString);
-            var cmd = dbConn.CreateCommand();
-
-            cmd.CommandText = "select * from recipe where recipe_id = @id";
-            cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
-
-            var data = GetData(dbConn, cmd);
-
-            if (data.Read())
+            // Initialize recipe only once
+            if (recipe == null)
             {
-                return new Recipe
+                recipe = new Recipe
                 {
                     RecipeId = (int)data["recipe_id"],
                     Name = data["name"].ToString(),
                     CookingTime = (int)data["cooking_time"],
                     Instructions = data["instructions"] == DBNull.Value
                         ? null
-                        : data["instructions"].ToString()
+                        : data["instructions"].ToString(),
+                    Ingredients = new List<Ingredient>()
                 };
             }
 
-            return null;
+            // Add ingredient rows
+            if (data["ingredient_id"] != DBNull.Value)
+            {
+                recipe.Ingredients.Add(new Ingredient
+                {
+                    IngredientId = (int)data["ingredient_id"],
+                    RecipeId = id,
+                    Name = data["ingredient_name"].ToString(),
+                    Quantity = data["quantity"].ToString()
+                });
+            }
         }
-        finally
-        {
-            dbConn?.Close();
-        }
+
+        return recipe;
     }
+    finally
+    {
+        dbConn?.Close();
+    }
+}
+
 
     
     // GET ALL RECIPES FROM THE DATABASE
