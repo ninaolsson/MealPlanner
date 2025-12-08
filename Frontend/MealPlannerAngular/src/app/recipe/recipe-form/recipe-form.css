@@ -1,0 +1,5 @@
+.recipe-form { padding: 1rem; }
+.recipe-form label { display: block; margin-top: 0.5rem; }
+input, textarea { width: 100%; padding: 0.4rem; margin-top: 0.25rem; }
+.form-actions { margin-top: 1rem; }
+.error { color: red; margin-top: 0.5rem; }

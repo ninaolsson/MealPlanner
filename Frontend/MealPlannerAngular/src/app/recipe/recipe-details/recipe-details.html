@@ -1,0 +1,27 @@
+<h1>Recipe Details</h1>
+
+<div *ngIf="recipe">
+
+  <h2>Name: {{ recipe.name }}</h2>
+
+  <p><strong>Cooking Time:</strong> {{ recipe.cookingTime }}</p>
+
+  <p><strong>Instructions:</strong></p>
+  <p>{{ recipe.instructions }}</p>
+
+  <h3>Ingredients:</h3>
+
+  <ul>
+    <li *ngFor="let ing of recipe.ingredients">
+      {{ ing.quantity }} {{ ing.name }}
+    </li>
+  </ul>
+
+  <p><a routerLink="/recipes">Back to Recipes</a></p>
+
+</div>
+
+<div *ngIf="error">
+  {{ error }}
+</div>
+

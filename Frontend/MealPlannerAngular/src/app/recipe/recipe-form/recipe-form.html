@@ -1,0 +1,36 @@
+<div class="recipe-form">
+    <h2>{{ isEdit ? 'Edit Recipe' : 'New Recipe' }}</h2>
+  
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div>
+        <label for="name">Name *</label>
+        <input id="name" formControlName="name" />
+        <div *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="error">
+          Name is required.
+        </div>
+      </div>
+  
+      <div>
+        <label for="cookingTime">Cooking time</label>
+        <input id="cookingTime" formControlName="cookingTime" placeholder="e.g. 30 min" />
+      </div>
+  
+      <div>
+        <label for="instructions">Instructions</label>
+        <textarea id="instructions" formControlName="instructions" rows="6"></textarea>
+      </div>
+  
+      <div class="ingredients">
+        <h3>Ingredients</h3>
+        <small>Enter ingredients as a single string (e.g. one per line or comma-separated)</small>
+        <textarea id="ingredients" formControlName="ingredients" rows="4" placeholder="e.g. 200g flour&#10;1 tsp salt&#10;2 eggs"></textarea>
+      </div>
+  
+      <div class="form-actions">
+        <button type="submit" [disabled]="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
+        <button type="button" (click)="cancel()">Cancel</button>
+      </div>
+  
+      <div *ngIf="error" class="error">{{ error }}</div>
+    </form>
+  </div>

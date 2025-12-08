@@ -1,0 +1,5 @@
+.recipe-list { padding: 1rem; }
+.recipe-list table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.recipe-list th, .recipe-list td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+.actions { margin-bottom: 0.5rem; }
+button { margin-right: .4rem; }
