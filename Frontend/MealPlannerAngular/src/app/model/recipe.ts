@@ -1,6 +1,5 @@
 export interface Ingredient {
     ingredientId: number;
-    recipeId: number;
     name: string;
     quantity: string;
   }
@@ -9,6 +8,6 @@ export interface Ingredient {
     recipeId: number;
     name: string;
     cookingTime: number;
-    instructions: string;
+    instructions?: string;
     ingredients: Ingredient[];
   }

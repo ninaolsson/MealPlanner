@@ -1,36 +1,68 @@
-<div class="recipe-form">
-    <h2>{{ isEdit ? 'Edit Recipe' : 'New Recipe' }}</h2>
-  
-    <form [formGroup]="form" (ngSubmit)="save()">
-      <div>
-        <label for="name">Name *</label>
-        <input id="name" formControlName="name" />
-        <div *ngIf="form.get('name')?.touched && form.get('name')?.invalid" class="error">
-          Name is required.
+<div class="recipe-form-container">
+
+  <h2>{{ isEdit ? 'Edit Recipe' : 'Create Recipe' }}</h2>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+
+    <!-- NAME -->
+    <div class="form-group">
+      <label>Name:</label>
+      <input formControlName="name" type="text" />
+      <div class="error" *ngIf="form.get('name')?.touched && form.get('name')?.invalid">
+        Name is required.
+      </div>
+    </div>
+
+    <!-- COOKING TIME -->
+    <div class="form-group">
+      <label>Cooking Time (minutes):</label>
+      <input formControlName="cookingTime" type="number" />
+    </div>
+
+    <!-- INSTRUCTIONS -->
+    <div class="form-group">
+      <label>Instructions:</label>
+      <textarea formControlName="instructions"></textarea>
+    </div>
+
+    <!-- INGREDIENTS -->
+    <div class="ingredients-section">
+      <h3>Ingredients</h3>
+
+    </div>
+
+
+      <div formArrayName="ingredients">
+
+        <div
+          class="ingredient-row"
+          *ngFor="let ing of ingredients.controls; let i = index"
+          [formGroupName]="i"
+        >
+          <input placeholder="Name" formControlName="name" />
+          <input placeholder="Quantity" formControlName="quantity" />
+
+          <button type="button" (click)="removeIngredient(i)">Remove
+          </button>
         </div>
+
+        <button type="button" class="add-btn" (click)="addIngredient()">
+          + Add Ingredient
+        </button>
       </div>
-  
-      <div>
-        <label for="cookingTime">Cooking time</label>
-        <input id="cookingTime" formControlName="cookingTime" placeholder="e.g. 30 min" />
-      </div>
-  
-      <div>
-        <label for="instructions">Instructions</label>
-        <textarea id="instructions" formControlName="instructions" rows="6"></textarea>
-      </div>
-  
-      <div class="ingredients">
-        <h3>Ingredients</h3>
-        <small>Enter ingredients as a single string (e.g. one per line or comma-separated)</small>
-        <textarea id="ingredients" formControlName="ingredients" rows="4" placeholder="e.g. 200g flour&#10;1 tsp salt&#10;2 eggs"></textarea>
-      </div>
-  
-      <div class="form-actions">
-        <button type="submit" [disabled]="saving">{{ saving ? 'Saving...' : 'Save' }}</button>
-        <button type="button" (click)="cancel()">Cancel</button>
-      </div>
-  
-      <div *ngIf="error" class="error">{{ error }}</div>
-    </form>
-  </div>
+
+    <!-- ERROR -->
+    <div *ngIf="error" class="error-box">{{ error }}</div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="actions">
+      <button type="submit" [disabled]="saving">
+        {{ saving ? 'Saving…' : 'Save' }}
+      </button>
+
+      <button type="button" (click)="cancel()">Cancel</button>
+    </div>
+
+  </form>
+
+</div>
