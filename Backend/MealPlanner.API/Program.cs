@@ -1,5 +1,6 @@
 using MealPlanner.Model.Entities;
 using MealPlanner.Model.Repositories;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 

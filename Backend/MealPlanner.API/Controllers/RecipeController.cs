@@ -28,14 +28,12 @@ namespace MealPlanner.API.Controllers
             if (recipe == null)
                 return NotFound($"Recipe with ID {id} not found.");
 
-            // Attach ingredients
             recipe.Ingredients = _ingredientRepo.GetIngredientsByRecipeId(id);
-
             return Ok(recipe);
         }
 
         // ---------------------------------------------------------
-        // GET ALL RECIPES (WITHOUT ingredients for performance)
+        // GET ALL RECIPES (WITHOUT INGREDIENTS)
         // ---------------------------------------------------------
         [HttpGet]
         public ActionResult<IEnumerable<Recipe>> GetRecipes()
@@ -44,35 +42,33 @@ namespace MealPlanner.API.Controllers
         }
 
         // ---------------------------------------------------------
-        // CREATE RECIPE + INGREDIENTS
+        // CREATE RECIPE (repository also inserts ingredients)
         // ---------------------------------------------------------
         [HttpPost]
         public ActionResult CreateRecipe([FromBody] Recipe recipe)
         {
+            Console.WriteLine("CreateRecipe called");
+
             if (recipe == null)
-                return BadRequest("Recipe data missing.");
-
-            bool ok = _recipeRepo.InsertRecipe(recipe);
-            if (!ok)
-                return BadRequest("Could not insert recipe.");
-
-            // -----------------------------------------------------
-            // Insert ingredients
-            // -----------------------------------------------------
-            if (recipe.Ingredients != null && recipe.Ingredients.Count > 0)
             {
-                foreach (var ing in recipe.Ingredients)
-                {
-                    ing.RecipeId = recipe.RecipeId;
-                    _ingredientRepo.InsertIngredient(ing);
-                }
+                Console.WriteLine("CreateRecipe FAILED: recipe was null");
+                return BadRequest("Recipe data missing.");
             }
 
+            bool ok = _recipeRepo.InsertRecipe(recipe);
+
+            if (!ok)
+            {
+                Console.WriteLine("CreateRecipe FAILED in repository");
+                return BadRequest("Could not insert recipe.");
+            }
+
+            Console.WriteLine("Recipe successfully inserted!");
             return Ok();
         }
 
         // ---------------------------------------------------------
-        // UPDATE RECIPE + REPLACE INGREDIENTS
+        // UPDATE RECIPE + INGREDIENTS
         // ---------------------------------------------------------
         [HttpPut]
         public ActionResult UpdateRecipe([FromBody] Recipe recipe)
@@ -84,29 +80,22 @@ namespace MealPlanner.API.Controllers
             if (existing == null)
                 return NotFound($"Recipe with ID {recipe.RecipeId} does not exist.");
 
-            bool ok = _recipeRepo.UpdateRecipe(recipe);
+            existing.Ingredients = _ingredientRepo.GetIngredientsByRecipeId(recipe.RecipeId);
+
+            existing.Name = recipe.Name;
+            existing.CookingTime = recipe.CookingTime;
+            existing.Instructions = recipe.Instructions;
+            existing.Ingredients = recipe.Ingredients;
+
+            bool ok = _recipeRepo.UpdateRecipe(existing);
             if (!ok)
                 return BadRequest("Failed to update recipe.");
-
-            // -----------------------------------------------------
-            // Replace Ingredients: delete all + reinsert new ones
-            // -----------------------------------------------------
-            _ingredientRepo.DeleteIngredientsByRecipeId(recipe.RecipeId);
-
-            if (recipe.Ingredients != null)
-            {
-                foreach (var ing in recipe.Ingredients)
-                {
-                    ing.RecipeId = recipe.RecipeId;
-                    _ingredientRepo.InsertIngredient(ing);
-                }
-            }
 
             return Ok();
         }
 
         // ---------------------------------------------------------
-        // DELETE RECIPE + ALL INGREDIENTS
+        // DELETE RECIPE + INGREDIENTS
         // ---------------------------------------------------------
         [HttpDelete("{id}")]
         public ActionResult DeleteRecipe(int id)
@@ -115,10 +104,8 @@ namespace MealPlanner.API.Controllers
             if (existing == null)
                 return NotFound($"Recipe with ID {id} not found.");
 
-            // Delete ingredients first
             _ingredientRepo.DeleteIngredientsByRecipeId(id);
 
-            // Delete the recipe
             bool ok = _recipeRepo.DeleteRecipe(id);
             if (!ok)
                 return BadRequest("Failed to delete recipe.");

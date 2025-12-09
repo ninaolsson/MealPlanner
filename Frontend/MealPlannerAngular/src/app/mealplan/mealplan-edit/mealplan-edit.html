@@ -17,9 +17,9 @@
 
     <label>Recipe:</label>
     <select [(ngModel)]="mealPlan.recipeId" name="recipeId">
-      <option *ngFor="let recipe of recipes" [value]="recipe.recipeId">
-        {{ recipe.name }}
-      </option>
+    <option *ngFor="let recipe of recipes" [ngValue]="recipe.recipeId">
+    {{ recipe.name }}
+    </option>
     </select>
     <br /><br />
 

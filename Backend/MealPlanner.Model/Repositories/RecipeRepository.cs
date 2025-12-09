@@ -1,103 +1,96 @@
 namespace MealPlanner.Model.Repositories;
 
 using System;
-
+using System.Collections.Generic;
 using MealPlanner.Model.Entities;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using NpgsqlTypes;
 
-
 public class RecipeRepository : BaseRepository
+{
+    public RecipeRepository(IConfiguration configuration) : base(configuration) { }
+
+    // ---------------------------------------------------------
+    // GET ONE RECIPE BY ID (WITHOUT INGREDIENTS)
+    // ---------------------------------------------------------
+    public Recipe GetRecipeById(int id)
     {
-        public RecipeRepository(IConfiguration configuration) : base(configuration) { }
+        NpgsqlConnection dbConn = null;
 
-        // ---------------------------------------------------------
-        // GET ONE RECIPE BY ID (WITHOUT INGREDIENTS)
-        // Ingredients are loaded in the controller via IngredientRepository
-        // ---------------------------------------------------------
-        public Recipe GetRecipeById(int id)
+        try
         {
-            NpgsqlConnection dbConn = null;
+            dbConn = new NpgsqlConnection(ConnectionString);
+            var cmd = dbConn.CreateCommand();
 
-            try
+            cmd.CommandText = "SELECT * FROM recipe WHERE recipe_id = @id";
+            cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
+
+            var data = GetData(dbConn, cmd);
+
+            if (data.Read())
             {
-                dbConn = new NpgsqlConnection(ConnectionString);
-                var cmd = dbConn.CreateCommand();
-
-                cmd.CommandText = "SELECT * FROM recipe WHERE recipe_id = @id";
-                cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
-
-                var data = GetData(dbConn, cmd);
-
-                if (data.Read())
+                return new Recipe
                 {
-                    return new Recipe
-                    {
-                        RecipeId = (int)data["recipe_id"],
-                        Name = data["name"].ToString(),
-                        CookingTime = (int)data["cooking_time"],
-                        Instructions = data["instructions"] == DBNull.Value
-                            ? null
-                            : data["instructions"].ToString(),
-
-                        // Ingredients will be added later in controller
-                        Ingredients = new List<Ingredient>()
-                    };
-                }
-
-                return null;
+                    RecipeId = (int)data["recipe_id"],
+                    Name = data["name"].ToString(),
+                    CookingTime = (int)data["cooking_time"],
+                    Instructions = data["instructions"] == DBNull.Value
+                        ? null
+                        : data["instructions"].ToString(),
+                    Ingredients = new List<Ingredient>()
+                };
             }
-            finally
-            {
-                dbConn?.Close();
-            }
+
+            return null;
         }
-
-        // ---------------------------------------------------------
-        // GET ALL RECIPES (WITHOUT INGREDIENTS)
-        // Ingredients will be loaded outside this repository
-        // ---------------------------------------------------------
-        public List<Recipe> GetRecipes()
+        finally
         {
-            var recipes = new List<Recipe>();
-            NpgsqlConnection dbConn = null;
-
-            try
-            {
-                dbConn = new NpgsqlConnection(ConnectionString);
-                var cmd = dbConn.CreateCommand();
-                cmd.CommandText = "SELECT * FROM recipe ORDER BY recipe_id";
-
-                var data = GetData(dbConn, cmd);
-
-                while (data.Read())
-                {
-                    recipes.Add(new Recipe
-                    {
-                        RecipeId = (int)data["recipe_id"],
-                        Name = data["name"].ToString(),
-                        CookingTime = (int)data["cooking_time"],
-                        Instructions = data["instructions"] == DBNull.Value
-                            ? null
-                            : data["instructions"].ToString(),
-                        Ingredients = new List<Ingredient>() // init empty list
-                    });
-                }
-
-                return recipes;
-            }
-            finally
-            {
-                dbConn?.Close();
-            }
+            dbConn?.Close();
         }
+    }
 
-        // ---------------------------------------------------------
-        // INSERT RECIPE
-        // Modified: Returns TRUE and sets RecipeId on the object
-        // ---------------------------------------------------------
-        public bool InsertRecipe(Recipe r)
+    // ---------------------------------------------------------
+    // GET ALL RECIPES (WITHOUT INGREDIENTS)
+    // ---------------------------------------------------------
+    public List<Recipe> GetRecipes()
+    {
+        var recipes = new List<Recipe>();
+        NpgsqlConnection dbConn = null;
+
+        try
+        {
+            dbConn = new NpgsqlConnection(ConnectionString);
+            var cmd = dbConn.CreateCommand();
+            cmd.CommandText = "SELECT * FROM recipe ORDER BY recipe_id";
+
+            var data = GetData(dbConn, cmd);
+
+            while (data.Read())
+            {
+                recipes.Add(new Recipe
+                {
+                    RecipeId = (int)data["recipe_id"],
+                    Name = data["name"].ToString(),
+                    CookingTime = (int)data["cooking_time"],
+                    Instructions = data["instructions"] == DBNull.Value
+                        ? null
+                        : data["instructions"].ToString(),
+                    Ingredients = new List<Ingredient>()
+                });
+            }
+
+            return recipes;
+        }
+        finally
+        {
+            dbConn?.Close();
+        }
+    }
+// ---------------------------------------------------------
+// INSERT RECIPE (WITH INGREDIENTS)
+// ---------------------------------------------------------
+public bool InsertRecipe(Recipe r)
 {
     var dbConn = new NpgsqlConnection(ConnectionString);
     dbConn.Open();
@@ -110,9 +103,9 @@ public class RecipeRepository : BaseRepository
         cmd.Transaction = transaction;
 
         cmd.CommandText = @"
-            insert into recipe (name, cooking_time, instructions)
-            values (@name, @cooking_time, @instructions)
-            returning recipe_id
+            INSERT INTO recipe (name, cooking_time, instructions)
+            VALUES (@name, @cooking_time, @instructions)
+            RETURNING recipe_id
         ";
 
         cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name);
@@ -120,7 +113,8 @@ public class RecipeRepository : BaseRepository
         cmd.Parameters.AddWithValue("@instructions",
             r.Instructions == null ? DBNull.Value : r.Instructions);
 
-        var newId = (int)cmd.ExecuteScalar();
+        // Store new ID on recipe object
+        int newId = (int)cmd.ExecuteScalar();
         r.RecipeId = newId;
 
         // Insert ingredients
@@ -132,14 +126,17 @@ public class RecipeRepository : BaseRepository
                 cmdIng.Transaction = transaction;
 
                 cmdIng.CommandText = @"
-                    insert into ingredient (recipe_id, name, quantity)
-                    values (@recipe_id, @name, @quantity)
+                    INSERT INTO ingredient (recipe_id, name, quantity)
+                    VALUES (@recipe_id, @name, @quantity)
                 ";
 
                 cmdIng.Parameters.AddWithValue("@recipe_id", NpgsqlDbType.Integer, newId);
                 cmdIng.Parameters.AddWithValue("@name", NpgsqlDbType.Text, ing.Name);
-                cmdIng.Parameters.AddWithValue("@quantity",
-                    ing.Quantity == null ? DBNull.Value : ing.Quantity);
+
+                // IMPORTANT: Specify varchar type explicitly
+                cmdIng.Parameters.AddWithValue("@quantity", 
+                    ing.Quantity == null ? DBNull.Value : (object)ing.Quantity);
+                cmdIng.Parameters["@quantity"].NpgsqlDbType = NpgsqlDbType.Varchar;
 
                 cmdIng.ExecuteNonQuery();
             }
@@ -148,83 +145,139 @@ public class RecipeRepository : BaseRepository
         transaction.Commit();
         return true;
     }
-    catch
-    {
-        transaction.Rollback();
-        return false;
-    }
+    catch (Exception ex)
+{
+    Console.WriteLine("=== INSERT ERROR ===");
+    Console.WriteLine(ex.GetType().ToString());
+    Console.WriteLine(ex.Message);
+    Console.WriteLine(ex.StackTrace);
+    Console.WriteLine("=== END ERROR ===");
+
+    transaction.Rollback();
+    return false;
+}
     finally
     {
         dbConn.Close();
     }
 }
 
-        // ---------------------------------------------------------
-        // UPDATE RECIPE
-        // ---------------------------------------------------------
-        public bool UpdateRecipe(Recipe r)
+    // ---------------------------------------------------------
+    // UPDATE RECIPE (WITH INGREDIENT INSERT/UPDATE/DELETE)
+    // ---------------------------------------------------------
+    public bool UpdateRecipe(Recipe r)
 {
     var dbConn = new NpgsqlConnection(ConnectionString);
     dbConn.Open();
-    var transaction = dbConn.BeginTransaction();
+    var tx = dbConn.BeginTransaction();
 
     try
     {
-        // Update recipe
+        // 1) Update main recipe
         var cmd = dbConn.CreateCommand();
-        cmd.Transaction = transaction;
+        cmd.Transaction = tx;
 
         cmd.CommandText = @"
-            update recipe set
+            UPDATE recipe SET
                 name = @name,
                 cooking_time = @cooking_time,
                 instructions = @instructions
-            where recipe_id = @id
+            WHERE recipe_id = @id
         ";
 
-        cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name);
-        cmd.Parameters.AddWithValue("@cooking_time", NpgsqlDbType.Integer, r.CookingTime);
+        cmd.Parameters.AddWithValue("@name", r.Name);
+        cmd.Parameters.AddWithValue("@cooking_time", r.CookingTime);
         cmd.Parameters.AddWithValue("@instructions",
-            r.Instructions == null ? DBNull.Value : r.Instructions);
-        cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, r.RecipeId);
+            (object)r.Instructions ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("@id", r.RecipeId);
 
         cmd.ExecuteNonQuery();
 
-        // Delete old ingredients
-        var cmdDelete = dbConn.CreateCommand();
-        cmdDelete.Transaction = transaction;
-        cmdDelete.CommandText = "delete from ingredient where recipe_id = @id";
-        cmdDelete.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, r.RecipeId);
-        cmdDelete.ExecuteNonQuery();
+        // 2) Load existing ingredient IDs
+        var existingIds = new List<int>();
 
-        // Insert new ingredients
-        if (r.Ingredients != null)
+        var cmdLoad = dbConn.CreateCommand();
+        cmdLoad.Transaction = tx;
+        cmdLoad.CommandText = "SELECT ingredient_id FROM ingredient WHERE recipe_id = @rid";
+        cmdLoad.Parameters.AddWithValue("@rid", r.RecipeId);
+
+        using (var reader = cmdLoad.ExecuteReader())
         {
-            foreach (var ing in r.Ingredients)
-            {
-                var cmdIng = dbConn.CreateCommand();
-                cmdIng.Transaction = transaction;
-
-                cmdIng.CommandText = @"
-                    insert into ingredient (recipe_id, name, quantity)
-                    values (@recipe_id, @name, @quantity)
-                ";
-
-                cmdIng.Parameters.AddWithValue("@recipe_id", NpgsqlDbType.Integer, r.RecipeId);
-                cmdIng.Parameters.AddWithValue("@name", NpgsqlDbType.Text, ing.Name);
-                cmdIng.Parameters.AddWithValue("@quantity",
-                    ing.Quantity == null ? DBNull.Value : ing.Quantity);
-
-                cmdIng.ExecuteNonQuery();
-            }
+            while (reader.Read())
+                existingIds.Add((int)reader["ingredient_id"]);
         }
 
-        transaction.Commit();
+        var keepIds = new List<int>();
+
+        // 3) Insert/update incoming ingredients
+        if (r.Ingredients != null)
+{
+    foreach (var ing in r.Ingredients)
+    {
+        // NEW INGREDIENT
+        if (ing.IngredientId == null || ing.IngredientId == 0)
+        {
+            var cmdInsert = dbConn.CreateCommand();
+            cmdInsert.Transaction = tx;
+
+            cmdInsert.CommandText = @"
+                insert into ingredient (recipe_id, name, quantity)
+                values (@rid, @name, @qty)
+                returning ingredient_id
+            ";
+
+            cmdInsert.Parameters.AddWithValue("@rid", r.RecipeId);
+            cmdInsert.Parameters.AddWithValue("@name", ing.Name);
+            cmdInsert.Parameters.AddWithValue("@qty", (object?)ing.Quantity ?? DBNull.Value);
+
+            int newId = (int)cmdInsert.ExecuteScalar();
+            keepIds.Add(newId);
+        }
+        else
+        {
+            // EXISTING INGREDIENT
+            keepIds.Add(ing.IngredientId.Value);
+
+            var cmdUpdate = dbConn.CreateCommand();
+            cmdUpdate.Transaction = tx;
+
+            cmdUpdate.CommandText = @"
+                update ingredient set
+                    name = @name,
+                    quantity = @qty
+                where ingredient_id = @id
+            ";
+
+            cmdUpdate.Parameters.AddWithValue("@id", ing.IngredientId.Value);
+            cmdUpdate.Parameters.AddWithValue("@name", ing.Name);
+            cmdUpdate.Parameters.AddWithValue("@qty", (object?)ing.Quantity ?? DBNull.Value);
+
+            cmdUpdate.ExecuteNonQuery();
+        }
+    }
+}
+
+        // 4) Delete removed ingredients
+        var toDelete = existingIds.Except(keepIds).ToList();
+
+        foreach (var delId in toDelete)
+        {
+            var cmdDelete = dbConn.CreateCommand();
+            cmdDelete.Transaction = tx;
+
+            cmdDelete.CommandText = "DELETE FROM ingredient WHERE ingredient_id = @id";
+            cmdDelete.Parameters.AddWithValue("@id", delId);
+
+            cmdDelete.ExecuteNonQuery();
+        }
+
+        tx.Commit();
         return true;
     }
-    catch
+    catch (Exception ex)
     {
-        transaction.Rollback();
+        Console.WriteLine("UpdateRecipe ERROR: " + ex.Message);
+        tx.Rollback();
         return false;
     }
     finally
@@ -233,17 +286,19 @@ public class RecipeRepository : BaseRepository
     }
 }
 
-        // ---------------------------------------------------------
-        // DELETE RECIPE
-        // ---------------------------------------------------------
-        public bool DeleteRecipe(int id)
-        {
-            var dbConn = new NpgsqlConnection(ConnectionString);
-            var cmd = dbConn.CreateCommand();
 
-            cmd.CommandText = "DELETE FROM recipe WHERE recipe_id = @id";
-            cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
+    // ---------------------------------------------------------
+    // DELETE RECIPE
+    // ---------------------------------------------------------
+    public bool DeleteRecipe(int id)
+    {
+        var dbConn = new NpgsqlConnection(ConnectionString);
+        var cmd = dbConn.CreateCommand();
 
-            return DeleteData(dbConn, cmd);
-        }
+        cmd.CommandText = "DELETE FROM recipe WHERE recipe_id = @id";
+        cmd.Parameters.AddWithValue("@id", NpgsqlDbType.Integer, id);
+
+        return DeleteData(dbConn, cmd);
     }
+}
+

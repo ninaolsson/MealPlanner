@@ -22,6 +22,7 @@ export class MealPlanCreateComponent implements OnInit {
     mealId: 0,
     dayOfWeek: 'Monday',
     mealType: 'Breakfast',
+    recipeName: '',
     recipeId: 0
   };
 

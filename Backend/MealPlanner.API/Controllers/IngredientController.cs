@@ -3,8 +3,6 @@ using MealPlanner.Model.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-//we probably dont have actions that needs this
-
 namespace MealPlanner.API.Controllers
 {
     [Route("api/[controller]")]
@@ -50,25 +48,33 @@ namespace MealPlanner.API.Controllers
         }
 
         [HttpPut]
-
         public ActionResult UpdateIngredient([FromBody] Ingredient ingredient)
         {
             if (ingredient == null)
             {
                 return BadRequest("Ingredient info not correct");
             }
-            Ingredient existinIngredient = Repository.GetIngredientById(ingredient.IngredientId);
-            if (existinIngredient == null)
+
+            if (ingredient.IngredientId == null)
+            {
+                return BadRequest("IngredientId cannot be null for update.");
+            }
+
+            Ingredient existingIngredient = Repository.GetIngredientById(ingredient.IngredientId.Value);
+            if (existingIngredient == null)
             {
                 return NotFound($"Ingredient with id {ingredient.IngredientId} not found");
             }
+
             bool status = Repository.UpdateIngredient(ingredient);
             if (status)
             {
                 return Ok();
             }
+
             return BadRequest("Something went wrong");
         }
+
         [HttpDelete("{id}")]
         public ActionResult DeleteIngredient([FromRoute] int id)
         {
@@ -82,7 +88,8 @@ namespace MealPlanner.API.Controllers
             {
                 return NoContent();
             }
-            return BadRequest($"Unable to ingredient with id {id}");
+            return BadRequest($"Unable to delete ingredient with id {id}");
         }
     }
 }
+

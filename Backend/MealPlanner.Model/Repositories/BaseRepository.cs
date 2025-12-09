@@ -5,9 +5,10 @@ using Microsoft.Extensions.Configuration;
 public class BaseRepository
 {
 protected string ConnectionString {get;}
-public BaseRepository(IConfiguration configuration) {
-ConnectionString = configuration.GetConnectionString("AppProgDb");
-}
+    public BaseRepository(IConfiguration configuration)
+    {
+        ConnectionString = configuration.GetConnectionString("AppProgDb");
+    }
 protected NpgsqlDataReader GetData(NpgsqlConnection conn, NpgsqlCommand
 cmd)
 {
