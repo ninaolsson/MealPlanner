@@ -1,1 +1,30 @@
-<p>mealplan-week-view works!</p>
+<div class="week-view-container">
+    <h2>Weekly Meal Plan</h2>
+  
+    <div *ngIf="loading">Loading...</div>
+  
+    <table *ngIf="!loading">
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th *ngFor="let m of mealTypes">{{ m }}</th>
+        </tr>
+      </thead>
+  
+      <tbody>
+        <tr *ngFor="let day of days">
+          <td class="day-label">{{ day }}</td>
+  
+          <td *ngFor="let type of mealTypes">
+            <ng-container *ngIf="week[day][type]; else emptySlot">
+              {{ week[day][type].recipeName }}
+            </ng-container>
+  
+            <ng-template #emptySlot>
+              <span class="empty">—</span>
+            </ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>

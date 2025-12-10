@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("MealPlanner.Model")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d0cf2539f1e9caec0458fab9e27bfd2533695439")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+82b94e7a5ab8975b50dd40e618a4b3b4924b65c8")]
 [assembly: System.Reflection.AssemblyProductAttribute("MealPlanner.Model")]
 [assembly: System.Reflection.AssemblyTitleAttribute("MealPlanner.Model")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,25 +1,31 @@
 <div class="recipe-list">
-    <h2>Recipes</h2>
-    <div class="actions">
-      <button (click)="newRecipe()">+ New Recipe</button>
-    </div>
-  
-    <table *ngIf="(recipes$ | async) as recipes">
-      <thead>
-        <tr><th>Name</th><th>Cooking Time in Minutes</th><th>Actions</th></tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let r of recipes">
-          <td>{{ r.name }}</td>
-          <td>{{ r.cookingTime || '—' }}</td>
-          <td>
-            <button (click)="viewRecipe(r.recipeId)">View</button>
-            <button (click)="editRecipe(r.recipeId)">Edit</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  
-    <div *ngIf="(recipes$ | async)?.length === 0">No recipes yet.</div>
+  <h2>Recipes</h2>
+
+  <div class="actions">
+    <button (click)="newRecipe()">+ New Recipe</button>
   </div>
-  
+
+  <table *ngIf="(recipes$ | async) as recipes">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Cooking Time in Minutes</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      <tr *ngFor="let r of recipes">
+        <td>{{ r.name }}</td>
+        <td>{{ r.cookingTime || '—' }}</td>
+        <td>
+          <button (click)="viewRecipe(r.recipeId)">View</button>
+          <button (click)="editRecipe(r.recipeId)">Edit</button>
+          <button (click)="deleteRecipe(r.recipeId)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div *ngIf="(recipes$ | async)?.length === 0">No recipes yet.</div>
+</div>

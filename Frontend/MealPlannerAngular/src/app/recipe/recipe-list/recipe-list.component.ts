@@ -45,5 +45,22 @@ export class RecipeListComponent implements OnInit {
   newRecipe() {
     this.router.navigate(['/recipes/create']);
   }
+
+  deleteRecipe(recipeId?: number) {
+    if (!recipeId) return;
+  
+    if (!confirm('Are you sure you want to delete this recipe?')) return;
+  
+    this.recipeService.deleteRecipe(recipeId).subscribe({
+      next: () => {
+        // Reload fresh list from backend
+        this.load();
+      },
+      error: (err) => {
+        console.error('Delete failed', err);
+        this.error = 'Failed to delete recipe.';
+      }
+    });
+  }
 }
 

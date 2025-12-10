@@ -1,5 +1,45 @@
-.recipe-form { padding: 1rem; }
-.recipe-form label { display: block; margin-top: 0.5rem; }
-input, textarea { width: 100%; padding: 0.4rem; margin-top: 0.25rem; }
-.form-actions { margin-top: 1rem; }
-.error { color: red; margin-top: 0.5rem; }
+/* Main container */
+.recipe-form-container {
+    padding: 1rem;
+  }
+  
+  /* Labels */
+  .recipe-form-container label {
+    display: block;
+    margin-top: 0.5rem;
+  }
+  
+  /* Inputs & textarea */
+  .recipe-form-container input,
+  .recipe-form-container textarea {
+    width: 100%;
+    padding: 0.4rem;
+    margin-top: 0.25rem;
+  }
+  
+  /* "Ingredients" section heading */
+  .ingredients-section {
+    margin-top: 1.5rem;
+  }
+  
+  /* + Add Ingredient button */
+  .add-btn {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  /* Save / Cancel container */
+  .actions {
+    margin-top: 0.5rem;
+  }
+  
+  /* Spacing between Save / Cancel buttons (and keep look the same) */
+  .actions button {
+    margin-right: 0.5rem;
+  }
+    
+  /* Error message */
+  .error-box {
+    color: red;
+    margin-top: 0.5rem;
+  }

@@ -1,0 +1,24 @@
+.week-view-container {
+    max-width: 800px;
+    margin: 20px auto;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 8px;
+    border: 1px solid #ccc;
+    text-align: center;
+  }
+  
+  .day-label {
+    font-weight: bold;
+    background: #f7f7f7;
+  }
+  
+  .empty {
+    color: #bbb;
+  }

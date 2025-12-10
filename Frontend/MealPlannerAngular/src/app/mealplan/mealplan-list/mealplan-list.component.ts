@@ -1,6 +1,8 @@
 /*VIEW ALL MEAL PLAN ENTRIES IN A TABLE*/
 
 
+/* VIEW ALL MEAL PLAN ENTRIES IN A TABLE */
+
 import { Component, OnInit } from '@angular/core';
 import { MealPlan } from '../../model/meal-plan';
 import { MealPlanService } from '../mealplan/mealplan.service';
@@ -23,11 +25,32 @@ export class MealPlanListComponent implements OnInit {
   ngOnInit() {
     this.mealPlanService.getMealPlans().subscribe({
       next: (data) => {
-        this.mealPlans = data;
+        this.mealPlans = this.sortMealPlans(data);
       },
       error: (err) => {
         console.error('Failed to fetch meal plans', err);
       }
+    });
+  }
+
+  // ---------------------------------------------------
+  // SORT BY DAY OF WEEK AND MEAL TYPE
+  // ---------------------------------------------------
+  sortMealPlans(list: MealPlan[]): MealPlan[] {
+    const dayOrder = [
+      "Monday", "Tuesday", "Wednesday", "Thursday",
+      "Friday", "Saturday", "Sunday"
+    ];
+
+    const mealOrder = ["Breakfast", "Lunch", "Dinner"];
+
+    return list.sort((a, b) => {
+      const dayCompare =
+        dayOrder.indexOf(a.dayOfWeek) - dayOrder.indexOf(b.dayOfWeek);
+
+      if (dayCompare !== 0) return dayCompare;
+
+      return mealOrder.indexOf(a.mealType) - mealOrder.indexOf(b.mealType);
     });
   }
 
@@ -44,4 +67,5 @@ export class MealPlanListComponent implements OnInit {
     }
   }
 }
+
 

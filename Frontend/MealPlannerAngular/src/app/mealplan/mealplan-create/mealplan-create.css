@@ -1,0 +1,32 @@
+
+:host {
+    font-family: inherit;   /* ensures it uses the global app font */
+  }
+
+  
+  form {
+    max-width: 400px;
+    margin-top: 1rem;
+    font-family: inherit;   /* double-ensures consistent font */
+  }
+  
+  .form-group {
+    margin-bottom: 1.2rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  label {
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  
+  select {
+    padding: 0.4rem;
+    font-size: 1rem;
+    font-family: inherit;
+  }
+  
+  button {
+    margin-right: 0.4rem;
+  }

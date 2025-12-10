@@ -1,36 +1,40 @@
-<h2>Meal Plan List</h2>
+<div class="mealplan-list">
 
-<table border="1" cellpadding="8">
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Day</th>
-      <th>Meal Type</th>
-      <th>Actions</th>
-    </tr>
-  </thead>
+  <h2>Meal Plan List</h2>
 
-  <tbody>
-
-    <!-- Empty state -->
-    <tr *ngIf="mealPlans.length === 0">
-      <td colspan="5">No meal plans found.</td>
-    </tr>
-
-    <!-- Rows -->
-    @for (plan of mealPlans; track plan.mealId) {
+  <table>
+    <thead>
       <tr>
-        <td>{{ plan.recipeName }}</td>
-        <td>{{ plan.dayOfWeek }}</td>
-        <td>{{ plan.mealType }}</td>
-        <td>
-          <button (click)="deleteMealPlan(plan.mealId)">Delete</button>
-          <button [routerLink]="['/mealplans/edit', plan.mealId]">Edit</button>
-        </td>
+        <th>Recipe</th>
+        <th>Day</th>
+        <th>Meal Type</th>
+        <th>Actions</th>
       </tr>
-    }
+    </thead>
 
-  </tbody>
-</table>
+    <tbody>
+
+      <!-- Empty state -->
+      <tr *ngIf="mealPlans.length === 0">
+        <td colspan="4">No meal plans found.</td>
+      </tr>
+
+      <!-- Rows -->
+      @for (plan of mealPlans; track plan.mealId) {
+        <tr>
+          <td>{{ plan.recipeName }}</td>
+          <td>{{ plan.dayOfWeek }}</td>
+          <td>{{ plan.mealType }}</td>
+          <td>
+            <button (click)="deleteMealPlan(plan.mealId)">Delete</button>
+            <button [routerLink]="['/mealplans/edit', plan.mealId]">Edit</button>
+          </td>
+        </tr>
+      }
+
+    </tbody>
+  </table>
+
+</div>
 
 
