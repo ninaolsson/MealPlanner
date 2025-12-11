@@ -1,15 +1,15 @@
 {
   "version": 2,
-  "dgSpecHash": "bwHRToZRlkY=",
+  "dgSpecHash": "Xbck5vZCMx4=",
   "success": true,
-  "projectFilePath": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.Model/MealPlanner.Model.csproj",
+  "projectFilePath": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.Model/MealPlanner.Model.csproj",
   "expectedPackageFiles": [
-    "/Users/ninaolsson/.nuget/packages/microsoft.extensions.configuration/10.0.0/microsoft.extensions.configuration.10.0.0.nupkg.sha512",
-    "/Users/ninaolsson/.nuget/packages/microsoft.extensions.configuration.abstractions/10.0.0/microsoft.extensions.configuration.abstractions.10.0.0.nupkg.sha512",
-    "/Users/ninaolsson/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.2/microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
-    "/Users/ninaolsson/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.2/microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
-    "/Users/ninaolsson/.nuget/packages/microsoft.extensions.primitives/10.0.0/microsoft.extensions.primitives.10.0.0.nupkg.sha512",
-    "/Users/ninaolsson/.nuget/packages/npgsql/9.0.4/npgsql.9.0.4.nupkg.sha512"
+    "/Users/sarahabdesakens/.nuget/packages/microsoft.extensions.configuration/10.0.0/microsoft.extensions.configuration.10.0.0.nupkg.sha512",
+    "/Users/sarahabdesakens/.nuget/packages/microsoft.extensions.configuration.abstractions/10.0.0/microsoft.extensions.configuration.abstractions.10.0.0.nupkg.sha512",
+    "/Users/sarahabdesakens/.nuget/packages/microsoft.extensions.dependencyinjection.abstractions/8.0.2/microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "/Users/sarahabdesakens/.nuget/packages/microsoft.extensions.logging.abstractions/8.0.2/microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
+    "/Users/sarahabdesakens/.nuget/packages/microsoft.extensions.primitives/10.0.0/microsoft.extensions.primitives.10.0.0.nupkg.sha512",
+    "/Users/sarahabdesakens/.nuget/packages/npgsql/9.0.4/npgsql.9.0.4.nupkg.sha512"
   ],
   "logs": []
 }

@@ -1,7 +1,8 @@
-import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { Recipe } from '../../model/recipe'; 
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { Recipe } from '../../model/recipe';
 
 @Injectable({
   providedIn: 'root'
@@ -12,23 +13,45 @@ export class RecipeService {
 
   constructor(private http: HttpClient) {}
 
+  // Get list of recipes
   getRecipes(): Observable<Recipe[]> {
-    return this.http.get<Recipe[]>(this.apiUrl);
+    return this.http.get<Recipe[]>(`${this.apiUrl}`);
   }
 
+  // Get single recipe by id
   getRecipe(id: number): Observable<Recipe> {
     return this.http.get<Recipe>(`${this.apiUrl}/${id}`);
   }
 
-  createRecipe(recipe: Recipe): Observable<any> {
-    return this.http.post(this.apiUrl, recipe);
+  // Create a new recipe
+  createRecipe(payload: Recipe): Observable<Recipe> {
+    return this.http.post<Recipe>(`${this.apiUrl}`, payload);
   }
 
-  updateRecipe(recipe: Recipe): Observable<any> {
-    return this.http.put(this.apiUrl, recipe);
+  // Update existing recipe
+  updateRecipe(payload: Recipe): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${payload.recipeId}`, payload);
   }
 
-  deleteRecipe(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${id}`);
+  // Delete recipe
+  deleteRecipe(id: number): Observable<void> {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+  }
+
+
+  checkTitleExists(title: string, excludeId?: number | null): Observable<boolean> {
+    if (!title || title.trim().length === 0) {
+      return of(false);
+    }
+  
+    let params = new HttpParams().set('title', title.trim());
+    if (excludeId != null) {
+      params = params.set('excludeId', String(excludeId));
+    }
+  
+    return this.http.get<{ exists: boolean }>(`${this.apiUrl}/check-title`, { params }).pipe(
+      map(res => !!res?.exists),
+      catchError(() => of(false))
+    );
   }
 }

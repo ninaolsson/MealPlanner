@@ -328,19 +328,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/ninaolsson/.nuget/packages/": {}
+    "/Users/sarahabdesakens/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.Model/MealPlanner.Model.csproj",
+      "projectUniqueName": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.Model/MealPlanner.Model.csproj",
       "projectName": "MealPlanner.Model",
-      "projectPath": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.Model/MealPlanner.Model.csproj",
-      "packagesPath": "/Users/ninaolsson/.nuget/packages/",
-      "outputPath": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.Model/obj/",
+      "projectPath": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.Model/MealPlanner.Model.csproj",
+      "packagesPath": "/Users/sarahabdesakens/.nuget/packages/",
+      "outputPath": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.Model/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/ninaolsson/.nuget/NuGet/NuGet.Config"
+        "/Users/sarahabdesakens/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"

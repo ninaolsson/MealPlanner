@@ -1,0 +1,24 @@
+# Ignore .NET build artifacts
+*/bin/
+*/obj/
+*.dll
+*.pdb
+
+# Ignore Angular build & dependencies
+MealPlannerAngular/node_modules/
+MealPlannerAngular/dist/
+
+# VSCode settings
+.vscode/
+# Ignore .NET build artifacts
+*/bin/
+*/obj/
+*.dll
+*.pdb
+
+# Ignore Angular build & dependencies
+MealPlannerAngular/node_modules/
+MealPlannerAngular/dist/
+
+# VSCode settings
+.vscode/

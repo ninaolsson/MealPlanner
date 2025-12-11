@@ -44,28 +44,26 @@ namespace MealPlanner.API.Controllers
         // ---------------------------------------------------------
         // CREATE RECIPE (repository also inserts ingredients)
         // ---------------------------------------------------------
-        [HttpPost]
+     [HttpPost]
         public ActionResult CreateRecipe([FromBody] Recipe recipe)
         {
-            Console.WriteLine("CreateRecipe called");
+            if (recipe == null) return BadRequest("Recipe data missing.");
 
-            if (recipe == null)
-            {
-                Console.WriteLine("CreateRecipe FAILED: recipe was null");
-                return BadRequest("Recipe data missing.");
-            }
+        if (_recipeRepo.ExistsByName(recipe.Name))
+        return Conflict(new { message = "A recipe with that name already exists." });
 
-            bool ok = _recipeRepo.InsertRecipe(recipe);
+         bool ok = _recipeRepo.InsertRecipe(recipe);
 
-            if (!ok)
-            {
-                Console.WriteLine("CreateRecipe FAILED in repository");
-                return BadRequest("Could not insert recipe.");
-            }
+         if (!ok)
+        {
+        if (_recipeRepo.ExistsByName(recipe.Name))
+            return Conflict(new { message = "A recipe with that name already exists." });
 
-            Console.WriteLine("Recipe successfully inserted!");
-            return Ok();
+        return BadRequest("Could not insert recipe.");
         }
+
+    return Ok();
+}
 
         // ---------------------------------------------------------
         // UPDATE RECIPE + INGREDIENTS
@@ -73,25 +71,31 @@ namespace MealPlanner.API.Controllers
         [HttpPut]
         public ActionResult UpdateRecipe([FromBody] Recipe recipe)
         {
-            if (recipe == null)
-                return BadRequest("Recipe data missing.");
+        if (recipe == null)
+        return BadRequest("Recipe data missing.");
 
-            var existing = _recipeRepo.GetRecipeById(recipe.RecipeId);
-            if (existing == null)
-                return NotFound($"Recipe with ID {recipe.RecipeId} does not exist.");
+        var existing = _recipeRepo.GetRecipeById(recipe.RecipeId);
+        if (existing == null)
+        return NotFound($"Recipe with ID {recipe.RecipeId} does not exist.");
 
-            existing.Ingredients = _ingredientRepo.GetIngredientsByRecipeId(recipe.RecipeId);
+        existing.Ingredients = _ingredientRepo.GetIngredientsByRecipeId(recipe.RecipeId);
 
-            existing.Name = recipe.Name;
-            existing.CookingTime = recipe.CookingTime;
-            existing.Instructions = recipe.Instructions;
-            existing.Ingredients = recipe.Ingredients;
+        existing.Name = recipe.Name;
+        existing.CookingTime = recipe.CookingTime;
+        existing.Instructions = recipe.Instructions;
+        existing.Ingredients = recipe.Ingredients;
 
-            bool ok = _recipeRepo.UpdateRecipe(existing);
-            if (!ok)
-                return BadRequest("Failed to update recipe.");
+        bool ok = _recipeRepo.UpdateRecipe(existing);
 
-            return Ok();
+        if (!ok)
+        {
+        if (_recipeRepo.ExistsByName(existing.Name, existing.RecipeId))
+        return Conflict(new { message = "A recipe with that name already exists." });
+
+        return BadRequest("Failed to update recipe.");
+        }      
+
+        return Ok();
         }
 
         // ---------------------------------------------------------
@@ -112,5 +116,21 @@ namespace MealPlanner.API.Controllers
 
             return NoContent();
         }
+
+        [HttpGet("check-title")]
+        public IActionResult CheckTitle([FromQuery] string title, [FromQuery] int? excludeId)
+        {
+            if (string.IsNullOrWhiteSpace(title))
+                return Ok(new { exists = false });
+
+            var all = _recipeRepo.GetRecipes();
+
+            var exists = all.Any(r =>
+                string.Equals(r.Name, title, StringComparison.OrdinalIgnoreCase)
+                && (!excludeId.HasValue || r.RecipeId != excludeId.Value)
+            );
+
+            return Ok(new { exists });
+}
     }
 }

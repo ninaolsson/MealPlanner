@@ -1,77 +1,88 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormArray, FormGroup, Validators } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { FormsModule, NgForm } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Observable } from 'rxjs';
+
 
 import { Recipe } from '../../model/recipe';
-import { RecipeService } from '../recipe/recipe.service';   // <-- NOTE THE PATH
+import { RecipeService } from '../recipe/recipe.service';
+
+interface IngredientEdit {
+  ingredientId?: number | null;
+  name: string;
+  quantity?: number | string | null;
+}
+
+interface RecipeEdit {
+  recipeId?: number | null;
+  name: string;
+  cookingTime?: number | string | null;
+  instructions?: string;
+  ingredients: IngredientEdit[];
+}
+
 
 @Component({
   selector: 'app-recipe-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [CommonModule, FormsModule],
   templateUrl: './recipe-form.html',
   styleUrls: ['./recipe-form.css']
 })
 export class RecipeFormComponent implements OnInit {
 
-  form!: FormGroup;
+  recipe: RecipeEdit = {
+    recipeId: undefined,
+    name: '',
+    cookingTime: '',
+    instructions: '',
+    ingredients: []
+  };
+
   isEdit = false;
   recipeId?: number;
   saving = false;
   error: string | null = null;
 
+
+  nameTaken = false;
+
   constructor(
-    private fb: FormBuilder,
     private recipeService: RecipeService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
 
-  // ---- Getter for easy access to ingredients ----
-  get ingredients(): FormArray {
-    return this.form.get('ingredients') as FormArray;
-  }
-
   ngOnInit(): void {
-    // ---- Build the form ----
-    this.form = this.fb.group({
-      name: ['', Validators.required],
-      cookingTime: [''],
-      instructions: [''],
-      ingredients: this.fb.array([])   // <-- IMPORTANT
-    });
-
-    // ---- Check if editing ----
     const idParam = this.route.snapshot.paramMap.get('id');
     if (idParam) {
       this.isEdit = true;
       this.recipeId = Number(idParam);
       this.loadRecipe(this.recipeId);
+    } else {
+      // start with one blank ingredient row for usability
+      if (!this.recipe.ingredients || this.recipe.ingredients.length === 0) {
+        this.addIngredient();
+      }
     }
   }
 
-  // ---- Populate form when editing ----
   loadRecipe(id: number) {
     this.recipeService.getRecipe(id).subscribe({
       next: (r) => {
-        this.form.patchValue({
-          name: r.name,
-          cookingTime: r.cookingTime,
-          instructions: r.instructions
-        });
-
-        // Populate ingredients
-        this.ingredients.clear();
-        r.ingredients.forEach(ing => {
-          this.ingredients.push(
-            this.fb.group({
-              ingredientId: [ing.ingredientId],
-              name: [ing.name, Validators.required],
-              quantity: [ing.quantity, Validators.required]
-            })
-          );
-        });
+        this.recipe = {
+          recipeId: r.recipeId,
+          name: r.name ?? '',
+          cookingTime: r.cookingTime ?? '',
+          instructions: r.instructions ?? '',
+          ingredients: (r.ingredients || []).map((ing: any) => ({
+            ingredientId: ing.ingredientId ?? null,
+            name: ing.name ?? '',
+            quantity: ing.quantity ?? null
+          }))
+        };
+        if (this.recipe.ingredients.length === 0) this.addIngredient();
       },
       error: () => {
         this.error = 'Failed to load recipe.';
@@ -79,54 +90,80 @@ export class RecipeFormComponent implements OnInit {
     });
   }
 
-  // ---- Add a new ingredient row ----
   addIngredient() {
-    this.ingredients.push(
-      this.fb.group({
-        ingredientId: [null],
-        name: ['', Validators.required],
-        quantity: ['', Validators.required]
-      })
-    );
+    this.recipe.ingredients.push({ ingredientId: null, name: '', quantity: null });
   }
 
-  // ---- Remove ingredient row ----
   removeIngredient(index: number) {
-    this.ingredients.removeAt(index);
+    this.recipe.ingredients.splice(index, 1);
+    if (this.recipe.ingredients.length === 0) this.addIngredient();
   }
 
-  // ---- Save handler ----
-  save() {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
+  checkNameUnique() {
+    this.nameTaken = false;
+    const title = (this.recipe.name || '').trim();
+    if (!title || title.length < 3) return; //no name under 3 characters
+  
+    this.recipeService.checkTitleExists(title, this.recipeId).subscribe({
+      next: (exists: boolean) => {
+        //another recipe already uses that name
+        this.nameTaken = !!exists;
+      },
+      error: (err: any) => {
+        console.error('checkTitleExists failed', err);
+        //don't block user on network error
+        this.nameTaken = false;
+      }
+    });
+  }
+
+  private parseNumber(value: number | string | undefined | null): number | undefined {
+    if (value === null || value === undefined || value === '') return undefined;
+    const n = Number(value);
+    return Number.isNaN(n) ? undefined : n;
+  }
+
+  save(form: NgForm) {
+    if (!form.valid || this.nameTaken) {
+      form.control.markAllAsTouched();
       return;
     }
 
     this.saving = true;
     this.error = null;
-
-    const payload: Recipe = {
-      recipeId: this.recipeId,
-      ...this.form.value
+  
+    const payload = {
+      recipeId: this.recipeId ?? undefined,
+      name: this.recipe.name,
+      cookingTime: this.parseNumber(this.recipe.cookingTime),
+      instructions: this.recipe.instructions,
+      ingredients: (this.recipe.ingredients || []).map(ing => ({
+        ingredientId: ing.ingredientId ?? undefined,
+        name: ing.name,
+        quantity: this.parseNumber(ing.quantity)
+      }))
     };
 
-    const obs = this.isEdit
-      ? this.recipeService.updateRecipe(payload)
-      : this.recipeService.createRecipe(payload);
-
+    let obs: Observable<any>;
+    if (this.isEdit) {
+      obs = this.recipeService.updateRecipe(payload as any);
+    } else {
+      obs = this.recipeService.createRecipe(payload as any);
+    }
+  
     obs.subscribe({
       next: () => {
         this.saving = false;
         this.router.navigate(['/recipes']);
       },
-      error: () => {
+      error: (err: any) => {
+        console.error(err);
         this.error = 'Failed to save recipe';
         this.saving = false;
       }
     });
   }
-
-  cancel() {
+  cancel(): void {
     this.router.navigate(['/recipes']);
   }
 }

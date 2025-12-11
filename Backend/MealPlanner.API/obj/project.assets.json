@@ -881,19 +881,19 @@
     ]
   },
   "packageFolders": {
-    "/Users/ninaolsson/.nuget/packages/": {}
+    "/Users/sarahabdesakens/.nuget/packages/": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.API/MealPlanner.API.csproj",
+      "projectUniqueName": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.API/MealPlanner.API.csproj",
       "projectName": "MealPlanner.API",
-      "projectPath": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.API/MealPlanner.API.csproj",
-      "packagesPath": "/Users/ninaolsson/.nuget/packages/",
-      "outputPath": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.API/obj/",
+      "projectPath": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.API/MealPlanner.API.csproj",
+      "packagesPath": "/Users/sarahabdesakens/.nuget/packages/",
+      "outputPath": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.API/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "/Users/ninaolsson/.nuget/NuGet/NuGet.Config"
+        "/Users/sarahabdesakens/.nuget/NuGet/NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net9.0"
@@ -905,8 +905,8 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "projectReferences": {
-            "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.Model/MealPlanner.Model.csproj": {
-              "projectPath": "/Users/ninaolsson/Desktop/Meal Planner/MealPlanner-Clean/Backend/MealPlanner.Model/MealPlanner.Model.csproj"
+            "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.Model/MealPlanner.Model.csproj": {
+              "projectPath": "/Users/sarahabdesakens/Documents/CBS/Applied programming/MealPlanner/Backend/MealPlanner.Model/MealPlanner.Model.csproj"
             }
           }
         }
