@@ -1,5 +1,5 @@
 .instructions {
-    white-space: pre-line; /* keeps line breaks from textarea */
+    white-space: pre-line; 
     margin-bottom: 1rem;
     max-width: 700px;
   }

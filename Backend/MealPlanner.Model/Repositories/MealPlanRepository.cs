@@ -9,9 +9,7 @@ using NpgsqlTypes;
     {
         public MealPlanRepository(IConfiguration configuration) : base(configuration) { }
 
-        // ---------------------------------------------------------
-        // GET ONE MEAL PLAN ENTRY (with recipe name)
-        // ---------------------------------------------------------
+        //Get one meal plan entry by id
         public MealPlan GetMealPlanById(int id)
         {
             NpgsqlConnection dbConn = null;
@@ -58,9 +56,7 @@ using NpgsqlTypes;
         }
 
 
-        // ---------------------------------------------------------
-        // GET MEAL PLANS FOR A SPECIFIC DAY
-        // ---------------------------------------------------------
+        //Get meal plans for a specific day of the week
         public List<MealPlan> GetMealPlansByDay(string dayOfWeek)
         {
             NpgsqlConnection dbConn = null;
@@ -111,9 +107,7 @@ using NpgsqlTypes;
         }
 
 
-        // ---------------------------------------------------------
-        // GET ALL MEAL PLANS (full week)
-        // ---------------------------------------------------------
+        //Get all meal plans
         public List<MealPlan> GetMealPlans()
         {
             NpgsqlConnection dbConn = null;
@@ -161,35 +155,32 @@ using NpgsqlTypes;
         }
 
 
-        // ---------------------------------------------------------
-        // INSERT MEAL PLAN ENTRY
-        // ---------------------------------------------------------
+    // Insert new meal plan entry
         public bool InsertMealPlan(MealPlan m)
         {
-        var dbConn = new NpgsqlConnection(ConnectionString);
-        var cmd = dbConn.CreateCommand();
+                var dbConn = new NpgsqlConnection(ConnectionString);
+                var cmd = dbConn.CreateCommand();
 
-        cmd.CommandText = @"
-        INSERT INTO mealplan (recipe_id, day_of_week, meal_type)
-        VALUES (
-            @recipeId,
-            @dayOfWeek::day_of_week_enum,
-            @mealType::meal_type_enum
-        );
-        ";
+                cmd.CommandText = @"
+                    INSERT INTO mealplan (recipe_id, day_of_week, meal_type)
+                    VALUES (
+                    @recipeId,
+                    @dayOfWeek::day_of_week_enum,
+                    @mealType::meal_type_enum
+                    );
+                ";
 
-        cmd.Parameters.AddWithValue("@recipeId", m.RecipeId);
-        cmd.Parameters.AddWithValue("@dayOfWeek", m.DayOfWeek.ToString());
-        cmd.Parameters.AddWithValue("@mealType", m.MealType.ToString());
+            cmd.Parameters.AddWithValue("@recipeId", m.RecipeId);
+            cmd.Parameters.AddWithValue("@dayOfWeek", m.DayOfWeek.ToString());
+            cmd.Parameters.AddWithValue("@mealType", m.MealType.ToString());
 
-        return InsertData(dbConn, cmd);
+            return InsertData(dbConn, cmd);
         }
         
 
 
-        // ---------------------------------------------------------
-    // MEAL PLAN ENTRY
-    // ---------------------------------------------------------
+
+    // Update meal plan entry
     public bool UpdateMealPlan(MealPlan m)
     {
         try
@@ -222,9 +213,7 @@ using NpgsqlTypes;
     }
 
 
-        // ---------------------------------------------------------
-        // DELETE ONE ENTRY
-        // ---------------------------------------------------------
+        //Delete one entry
         public bool DeleteMealPlan(int id)
         {
             var dbConn = new NpgsqlConnection(ConnectionString);
@@ -237,9 +226,7 @@ using NpgsqlTypes;
         }
 
 
-        // ---------------------------------------------------------
-        // DELETE ALL MEAL PLANS (reset week)
-        // ---------------------------------------------------------
+        // Delete all meal plans/reset week
         public bool DeleteAllMealPlans()
         {
             var dbConn = new NpgsqlConnection(ConnectionString);

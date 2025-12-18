@@ -11,9 +11,7 @@ public class RecipeRepository : BaseRepository
 {
     public RecipeRepository(IConfiguration configuration) : base(configuration) { }
 
-    // ---------------------------------------------------------
-    // GET ONE RECIPE BY ID (WITHOUT INGREDIENTS)
-    // ---------------------------------------------------------
+    //Get one recipe by id
     public Recipe GetRecipeById(int id)
     {
         NpgsqlConnection dbConn = null;
@@ -52,36 +50,35 @@ public class RecipeRepository : BaseRepository
 
     public bool ExistsByName(string name, int? excludeId = null)    
     {
-    using var dbConn = new NpgsqlConnection(ConnectionString);
-    dbConn.Open();
-    using var cmd = dbConn.CreateCommand();
+        using var dbConn = new NpgsqlConnection(ConnectionString);
+        dbConn.Open();
+        using var cmd = dbConn.CreateCommand();
 
-    if (excludeId.HasValue)
-    {
-        cmd.CommandText = @"
-            SELECT COUNT(*) FROM recipe
-            WHERE lower(name) = lower(@name) AND recipe_id <> @excludeId
-        ";
-        cmd.Parameters.AddWithValue("@excludeId", NpgsqlDbType.Integer, excludeId.Value);
-        }
-    else
+        if (excludeId.HasValue)
         {
-        cmd.CommandText = @"
-            SELECT COUNT(*) FROM recipe
-            WHERE lower(name) = lower(@name)
-        ";
-        }
+            cmd.CommandText = @"
+                SELECT COUNT(*) FROM recipe
+                WHERE lower(name) = lower(@name) AND recipe_id <> @excludeId
+            ";
+            cmd.Parameters.AddWithValue("@excludeId", NpgsqlDbType.Integer, excludeId.Value);
+            }
+        else
+            {
+            cmd.CommandText = @"
+                SELECT COUNT(*) FROM recipe
+                WHERE lower(name) = lower(@name)
+            ";
+            }
 
     cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, name);
 
-    var cntObj = cmd.ExecuteScalar();
-    var cnt = cntObj == null ? 0L : Convert.ToInt64(cntObj);
-    return cnt > 0;
-}
+        var cntObj = cmd.ExecuteScalar();
+        var cnt = cntObj == null ? 0L : Convert.ToInt64(cntObj);
+        return cnt > 0;
+    }
 
-    // ---------------------------------------------------------
-    // GET ALL RECIPES (WITHOUT INGREDIENTS)
-    // ---------------------------------------------------------
+
+    //Get all recipes without ingredients
     public List<Recipe> GetRecipes()
     {
         var recipes = new List<Recipe>();
@@ -116,85 +113,83 @@ public class RecipeRepository : BaseRepository
             dbConn?.Close();
         }
     }
-    // ---------------------------------------------------------
-    // INSERT RECIPE (WITH INGREDIENTS)
-    // ---------------------------------------------------------
-public bool InsertRecipe(Recipe r)
-{
-    using var dbConn = new NpgsqlConnection(ConnectionString);
-    dbConn.Open();
-    using var tx = dbConn.BeginTransaction();
 
-    try
+    //Insert recipe with ingredients, ensuring name uniqueness with advisory locks
+    public bool InsertRecipe(Recipe r)
     {
-        // 1) Obtain advisory lock based on recipe name (xact-lock so it's released on commit/rollback)
-        using (var cmdLock = dbConn.CreateCommand())
-        {
-            cmdLock.Transaction = tx;
-            cmdLock.CommandText = @"
-                SELECT pg_advisory_xact_lock(
-                  ('x' || substr(md5(@name), 1, 16))::bit(64)::bigint
-                )";
-            cmdLock.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name ?? string.Empty);
-            cmdLock.ExecuteNonQuery();
-        }
+        using var dbConn = new NpgsqlConnection(ConnectionString);
+        dbConn.Open();
+        using var tx = dbConn.BeginTransaction();
 
-        // 2) Double-check that name does not exist (case-insensitive)
-        using (var cmdCheck = dbConn.CreateCommand())
+        try
         {
-            cmdCheck.Transaction = tx;
-            cmdCheck.CommandText = "SELECT COUNT(*) FROM recipe WHERE lower(name) = lower(@name)";
-            cmdCheck.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name ?? string.Empty);
-            var exists = Convert.ToInt64(cmdCheck.ExecuteScalar()) > 0;
-            if (exists)
+            // 1) Obtain advisory lock based on recipe name
+            using (var cmdLock = dbConn.CreateCommand())
             {
-                tx.Rollback();
-                return false; // caller (controller) should treat this as "409 Conflict"
+                cmdLock.Transaction = tx;
+                cmdLock.CommandText = @"
+                    SELECT pg_advisory_xact_lock(
+                    ('x' || substr(md5(@name), 1, 16))::bit(64)::bigint
+                    )";
+                cmdLock.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name ?? string.Empty);
+                cmdLock.ExecuteNonQuery();
             }
-        }
 
-        // 3) Insert recipe (same transaction)
-        using (var cmd = dbConn.CreateCommand())
-        {
-            cmd.Transaction = tx;
-            cmd.CommandText = @"
-                INSERT INTO recipe (name, cooking_time, instructions)
-                VALUES (@name, @cooking_time, @instructions)
-                RETURNING recipe_id
-            ";
-            cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name ?? string.Empty);
-            cmd.Parameters.AddWithValue("@cooking_time", NpgsqlDbType.Integer, r.CookingTime);
-            cmd.Parameters.AddWithValue("@instructions", (object?)r.Instructions ?? DBNull.Value);
-
-            int newId = (int)cmd.ExecuteScalar();
-            r.RecipeId = newId;
-        }
-
-        // 4) Insert ingredients (if any) — same as din eksisterende logic
-        if (r.Ingredients != null)
-        {
-            foreach (var ing in r.Ingredients)
+            // 2) Double-check that name does not exist (case-insensitive)
+            using (var cmdCheck = dbConn.CreateCommand())
             {
-                using var cmdIng = dbConn.CreateCommand();
-                cmdIng.Transaction = tx;
-                cmdIng.CommandText = @"
-                    INSERT INTO ingredient (recipe_id, name, quantity)
-                    VALUES (@recipe_id, @name, @quantity)
+                cmdCheck.Transaction = tx;
+                cmdCheck.CommandText = "SELECT COUNT(*) FROM recipe WHERE lower(name) = lower(@name)";
+                cmdCheck.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name ?? string.Empty);
+                var exists = Convert.ToInt64(cmdCheck.ExecuteScalar()) > 0;
+                if (exists)
+                {
+                    tx.Rollback();
+                    return false; // caller (controller) should treat this as "409 Conflict"
+                }
+            }
+
+            // 3) Insert recipe (same transaction)
+            using (var cmd = dbConn.CreateCommand())
+            {
+                cmd.Transaction = tx;
+                cmd.CommandText = @"
+                    INSERT INTO recipe (name, cooking_time, instructions)
+                    VALUES (@name, @cooking_time, @instructions)
+                    RETURNING recipe_id
                 ";
-                cmdIng.Parameters.AddWithValue("@recipe_id", NpgsqlDbType.Integer, r.RecipeId);
-                cmdIng.Parameters.AddWithValue("@name", NpgsqlDbType.Text, ing.Name ?? string.Empty);
-                cmdIng.Parameters.AddWithValue("@quantity", (object?)ing.Quantity ?? DBNull.Value);
-                cmdIng.Parameters["@quantity"].NpgsqlDbType = NpgsqlDbType.Varchar;
-                cmdIng.ExecuteNonQuery();
-            }
-        }
+                cmd.Parameters.AddWithValue("@name", NpgsqlDbType.Text, r.Name ?? string.Empty);
+                cmd.Parameters.AddWithValue("@cooking_time", NpgsqlDbType.Integer, r.CookingTime);
+                cmd.Parameters.AddWithValue("@instructions", (object?)r.Instructions ?? DBNull.Value);
 
-        tx.Commit();
-        return true;
-    }
+                int newId = (int)cmd.ExecuteScalar();
+                r.RecipeId = newId;
+            }
+
+            // 4) Insert ingredients (if any)
+            if (r.Ingredients != null)
+            {
+                foreach (var ing in r.Ingredients)
+                {
+                    using var cmdIng = dbConn.CreateCommand();
+                    cmdIng.Transaction = tx;
+                    cmdIng.CommandText = @"
+                        INSERT INTO ingredient (recipe_id, name, quantity)
+                        VALUES (@recipe_id, @name, @quantity)
+                    ";
+                    cmdIng.Parameters.AddWithValue("@recipe_id", NpgsqlDbType.Integer, r.RecipeId);
+                    cmdIng.Parameters.AddWithValue("@name", NpgsqlDbType.Text, ing.Name ?? string.Empty);
+                    cmdIng.Parameters.AddWithValue("@quantity", (object?)ing.Quantity ?? DBNull.Value);
+                    cmdIng.Parameters["@quantity"].NpgsqlDbType = NpgsqlDbType.Varchar;
+                    cmdIng.ExecuteNonQuery();
+                }
+            }
+
+            tx.Commit();
+            return true;
+        }
     catch (PostgresException pgEx) when (pgEx.SqlState == "23505")
     {
-        // Hvis DB-side unique constraint på et tidspunkt findes, håndter det pænt
         tx.Rollback();
         Console.WriteLine("Insert unique violation: " + pgEx.Message);
         return false;
@@ -207,9 +202,7 @@ public bool InsertRecipe(Recipe r)
     }
 }
 
-    // ---------------------------------------------------------
-    // UPDATE RECIPE (WITH INGREDIENT INSERT/UPDATE/DELETE)
-    // ---------------------------------------------------------
+//Update recipe and its ingredients, ensuring name uniqueness
 public bool UpdateRecipe(Recipe r)
 {
     using var dbConn = new NpgsqlConnection(ConnectionString);
@@ -266,7 +259,7 @@ public bool UpdateRecipe(Recipe r)
             cmd.ExecuteNonQuery();
         }
 
-        // 2) Load existing ingredient IDs (within same tx)
+        // 2) Load existing ingredient IDs
         var existingIds = new List<int>();
         using (var cmdLoad = dbConn.CreateCommand())
         {
@@ -362,9 +355,7 @@ public bool UpdateRecipe(Recipe r)
 }
 
 
-    // ---------------------------------------------------------
-    // DELETE RECIPE
-    // ---------------------------------------------------------
+    //Delete one recipe by id
     public bool DeleteRecipe(int id)
     {
         var dbConn = new NpgsqlConnection(ConnectionString);

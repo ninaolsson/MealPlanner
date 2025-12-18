@@ -18,9 +18,7 @@ namespace MealPlanner.API.Controllers
             _ingredientRepo = ingredientRepo;
         }
 
-        // ---------------------------------------------------------
-        // GET ONE RECIPE (WITH INGREDIENTS)
-        // ---------------------------------------------------------
+
         [HttpGet("{id}")]
         public ActionResult<Recipe> GetRecipe(int id)
         {
@@ -32,51 +30,45 @@ namespace MealPlanner.API.Controllers
             return Ok(recipe);
         }
 
-        // ---------------------------------------------------------
-        // GET ALL RECIPES (WITHOUT INGREDIENTS)
-        // ---------------------------------------------------------
+
         [HttpGet]
         public ActionResult<IEnumerable<Recipe>> GetRecipes()
         {
             return Ok(_recipeRepo.GetRecipes());
         }
 
-        // ---------------------------------------------------------
-        // CREATE RECIPE (repository also inserts ingredients)
-        // ---------------------------------------------------------
-     [HttpPost]
+        [HttpPost]
         public ActionResult CreateRecipe([FromBody] Recipe recipe)
         {
-            if (recipe == null) return BadRequest("Recipe data missing.");
+            if (recipe == null) 
+                return BadRequest("Recipe data missing.");
 
-        if (_recipeRepo.ExistsByName(recipe.Name))
-        return Conflict(new { message = "A recipe with that name already exists." });
+            if (_recipeRepo.ExistsByName(recipe.Name))
+                return Conflict(new { message = "A recipe with that name already exists." });
 
-         bool ok = _recipeRepo.InsertRecipe(recipe);
+            bool ok = _recipeRepo.InsertRecipe(recipe);
 
-         if (!ok)
-        {
-        if (_recipeRepo.ExistsByName(recipe.Name))
-            return Conflict(new { message = "A recipe with that name already exists." });
+            if (!ok)
+            {
+                if (_recipeRepo.ExistsByName(recipe.Name))
+                    return Conflict(new { message = "A recipe with that name already exists." });
 
-        return BadRequest("Could not insert recipe.");
-        }
+                return BadRequest("Could not insert recipe.");
+            }
 
-    return Ok();
-}
+            return Ok();
+            }
 
-        // ---------------------------------------------------------
-        // UPDATE RECIPE + INGREDIENTS
-        // ---------------------------------------------------------
+
         [HttpPut]
         public ActionResult UpdateRecipe([FromBody] Recipe recipe)
         {
-        if (recipe == null)
-        return BadRequest("Recipe data missing.");
+            if (recipe == null)
+                return BadRequest("Recipe data missing.");
 
-        var existing = _recipeRepo.GetRecipeById(recipe.RecipeId);
-        if (existing == null)
-        return NotFound($"Recipe with ID {recipe.RecipeId} does not exist.");
+            var existing = _recipeRepo.GetRecipeById(recipe.RecipeId);
+            if (existing == null)
+                return NotFound($"Recipe with ID {recipe.RecipeId} does not exist.");
 
         existing.Ingredients = _ingredientRepo.GetIngredientsByRecipeId(recipe.RecipeId);
 
@@ -89,18 +81,16 @@ namespace MealPlanner.API.Controllers
 
         if (!ok)
         {
-        if (_recipeRepo.ExistsByName(existing.Name, existing.RecipeId))
-        return Conflict(new { message = "A recipe with that name already exists." });
+            if (_recipeRepo.ExistsByName(existing.Name, existing.RecipeId))
+                return Conflict(new { message = "A recipe with that name already exists." });
 
-        return BadRequest("Failed to update recipe.");
+            return BadRequest("Failed to update recipe.");
         }      
 
         return Ok();
         }
 
-        // ---------------------------------------------------------
-        // DELETE RECIPE + INGREDIENTS
-        // ---------------------------------------------------------
+
         [HttpDelete("{id}")]
         public ActionResult DeleteRecipe(int id)
         {
@@ -131,6 +121,6 @@ namespace MealPlanner.API.Controllers
             );
 
             return Ok(new { exists });
-}
+        }
     }
 }
